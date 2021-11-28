@@ -11,3 +11,27 @@ Disclaimer: This project is not affiliated with Riot Games in any way.
 
 If you are interested in using this project or are just curious, send an email to
 [raokosan@gmail.com](mailto:raokosan@gmail.com).
+
+# Quick Start Guide
+
+## Get TLoL-py
+
+### From Source
+
+You can install the TLoL python module from a local clone of the git repo:
+
+```bash
+git clone https://github.com/MiscellaneousStuff/tlol-py.git
+pip install --upgrade tlol-py/
+```
+
+## Config
+
+This module requires the `EnableReplayApi=1` flag to be added to `.\Config\game.cfg`
+underneath the `[General]` section so it should like:
+
+```config
+[General]
+...
+EnableReplayApi=1
+```

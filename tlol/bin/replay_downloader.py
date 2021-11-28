@@ -54,7 +54,7 @@ def main(unused_argv):
         win_only=False,
         max_workers=10,
         seasonIds=[17, 16])
-    matches = list(matches)[0:2]
+    matches = list(matches)[0:1]
     print(matches)
     
     # Download first game
