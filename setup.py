@@ -52,8 +52,9 @@ setup(
     url='https://github.com/MiscellaneousStuff/tlol-py',
     packages=[
         'tlol',
-        'tlol.stats',
-        'tlol.replays'
+        'tlol.datasets',
+        'tlol.replays',
+        'tlol.stats'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',

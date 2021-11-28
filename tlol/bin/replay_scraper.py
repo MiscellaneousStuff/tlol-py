@@ -1,4 +1,3 @@
-
 # MIT License
 # 
 # Copyright (c) 2021 MiscellaneousStuff
@@ -21,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 """Scrapes the observations from replays within a source directory and stores
-those scraped observations as JSON in a target directory."""
+those scraped observations as json in a target directory."""
 
 from absl import app
 from absl import flags

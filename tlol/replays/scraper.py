@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 """Scrapes observations from a replay file by replaying a match using
-the League game client and storing the observations in a JSON file."""
+the League game client and storing the observations in a json file."""
 
 import os
 import time
