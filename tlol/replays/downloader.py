@@ -64,8 +64,9 @@ class ReplayDownloader(object):
         auth_token = base64.b64encode(
             f"riot:{self.remoting_auth_token}".encode("utf-8"))
         auth_token = str(auth_token, encoding="utf-8")
+        app_port = self.app_port
         url = \
-            f"https://127.0.0.1:{auth_token}/lol-replays/v1/rofls/{game_id}/download/graceful"
+            f"https://127.0.0.1:{app_port}/lol-replays/v1/rofls/{game_id}/download/graceful"
         req = requests.post(
             url=url,
             headers={

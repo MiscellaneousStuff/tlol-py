@@ -22,7 +22,12 @@
 """Custom u.gg API wrapper.
 
 Provides methods to get players on the leaderboard, games which a player has
-played, champion statistics and more."""
+played, champion statistics and more.
+
+u.gg season IDs:
+17 - Season 12
+16 - Season 11
+"""
 
 import os
 import json
@@ -108,7 +113,7 @@ class U_GG_API(object):
                 "queueType": [420], # 420 = solo/duo
                 "regionId": "euw1",
                 "role": [],
-                "seasonIds": [16],
+                "seasonIds": seasonIds,
                 "summonerName": summoner_name
             }
         }

@@ -40,7 +40,15 @@ setup(
     author='MiscellaneousStuff',
     author_email='raokosan@gmail.com',
     license='MIT License',
-    keywords=['League of Legends', 'Game Playing AI', 'Deep Learning'],
+    keywords=[
+        'League of Legends',
+        'Machine Learning',
+        'Reinforcement Learning',
+        'Supervised Learning',
+        'TLoL',
+        'Dataset Generation',
+        'Data Scraping'
+    ],
     url='https://github.com/MiscellaneousStuff/tlol-py',
     packages=[
         'tlol',

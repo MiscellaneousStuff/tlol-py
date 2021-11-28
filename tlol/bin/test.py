@@ -42,20 +42,26 @@ def main(unused_argv):
     
     # Extract summoner names
     summoner_names = [s["summonerName"]
-                      for s in summoners][0:1]
+                      for s in summoners]
     print(summoner_names)
 
     # Get matches for above summoners matching specific criteria
     matches = u_gg.get_matches(
         summoner_names=summoner_names,
-        champs=["Miss Fortune", "Nami"],
-        target_patch="11_21",
+        champs=["Caitlyn"],
+        target_patch="11_23",
         outpath="", # set the outfile to write the match ids to a file
         win_only=False,
-        max_workers=10)
-    
+        max_workers=10,
+        seasonIds=[17, 16])
+    matches = list(matches)[0:2]
     print(matches)
     
+    # Download first game
+    for game_id in matches:
+        req = downloader.download(game_id)
+        print('Replay DL Status:', game_id, req.content, req.status_code)
+
 def entry_point():
     app.run(main)
 
