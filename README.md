@@ -1,4 +1,4 @@
-# TLoL-py - League of Legends v11.23 Deep Learning Library
+# TLoL-py - League of Legends Deep Learning Library
 
 TLoL-py is the Python component of the TLoL League of Legends deep learning library.
 It provides a set of utility methods and classes to deal with League of Legends
