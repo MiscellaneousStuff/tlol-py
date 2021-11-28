@@ -24,9 +24,21 @@ Solo/Duo ladder and gathers all of the games which those players have played
 which match a certain criteria."""
 
 from absl import app
+from absl import flags
 
 from tlol.stats.u_gg         import U_GG_API
 from tlol.replays.downloader import ReplayDownloader
+
+FLAGS = flags.FLAGS
+flags.DEFINE_string("champs", "", \
+    """(Default: "", any champion)
+    Comma-separated list of champions.
+    Logical OR search term, so if any of them are present the game is returned.""")
+flags.DEFINE_string("target_path", "11_23", "U.GG formatted target League patch")
+flags.DEFINE_integer("last_page", None, \
+    "Sets the last leaderboard page which is scraped")
+
+flags.mark_flag_as_required("last_page")
 
 def main(unused_argv):
     # Setup APIs
@@ -36,7 +48,7 @@ def main(unused_argv):
     # Get top players on EUW Ranked/Solo Duo leaderboard
     summoners = u_gg.get_leaderboard(
         page_start=1,
-        page_end=2,
+        page_end=FLAGS.last_page,
         region="euw1",
         max_workers=1)
     
@@ -48,8 +60,8 @@ def main(unused_argv):
     # Get matches for above summoners matching specific criteria
     matches = u_gg.get_matches(
         summoner_names=summoner_names,
-        champs=["Caitlyn"],
-        target_patch="11_23",
+        champs=FLAGS.champs.split(","), # ["Caitlyn"],
+        target_patch=FLAGS.target_path,
         outpath="", # set the outfile to write the match ids to a file
         win_only=False,
         max_workers=10,

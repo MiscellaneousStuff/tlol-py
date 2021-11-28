@@ -28,7 +28,8 @@ pip install --upgrade tlol-py/
 ## Config
 
 This module requires the `EnableReplayApi=1` flag to be added to `.\Config\game.cfg`
-underneath the `[General]` section so it should like:
+within the League of Legends installation directory, underneath the `[General]`
+section so it should like:
 
 ```config
 [General]
