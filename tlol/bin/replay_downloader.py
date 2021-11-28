@@ -34,7 +34,11 @@ flags.DEFINE_string("champs", "", \
     """(Default: "", any champion)
     Comma-separated list of champions.
     Logical OR search term, so if any of them are present the game is returned.""")
-flags.DEFINE_string("target_path", "11_23", "U.GG formatted target League patch")
+flags.DEFINE_string("target_patch", "11_23", "U.GG formatted target League patch")
+flags.DEFINE_integer("max_games", -1, \
+    """(Default: Max returned games)
+    Limits the number of replay files downloaded up to a maximum number of games.""")
+
 flags.DEFINE_integer("last_page", None, \
     "Sets the last leaderboard page which is scraped")
 
@@ -61,12 +65,15 @@ def main(unused_argv):
     matches = u_gg.get_matches(
         summoner_names=summoner_names,
         champs=FLAGS.champs.split(","), # ["Caitlyn"],
-        target_patch=FLAGS.target_path,
+        target_patch=FLAGS.target_patch,
         outpath="", # set the outfile to write the match ids to a file
         win_only=False,
         max_workers=10,
         seasonIds=[17, 16])
-    matches = list(matches)[0:1]
+    matches = list(matches)
+    if FLAGS.max_games != -1:
+        matches = matches[0:FLAGS.max_games]
+    
     print(matches)
     
     # Download first game
