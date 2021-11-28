@@ -43,7 +43,8 @@ setup(
     keywords=['League of Legends', 'Game Playing AI', 'Deep Learning'],
     url='https://github.com/MiscellaneousStuff/tlol-py',
     packages=[
-        'tlol'
+        'tlol',
+        'tlol.stats'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
