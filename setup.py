@@ -59,7 +59,8 @@ setup(
     ],
     install_requires=[
         'absl-py',
-        'requests'
+        'requests',
+        'psutil'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
