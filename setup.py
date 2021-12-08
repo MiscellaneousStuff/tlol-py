@@ -58,7 +58,9 @@ setup(
         'tlol.stats'
     ],
     install_requires=[
-        'absl'
+        'absl-py',
+        'requests',
+        'psutil'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
