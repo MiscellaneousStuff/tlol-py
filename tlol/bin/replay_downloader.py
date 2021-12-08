@@ -39,6 +39,8 @@ flags.DEFINE_integer("max_games", -1, \
     """(Default: Max returned games)
     Limits the number of replay files downloaded up to a maximum number of games.""")
 
+flags.DEFINE_integer("start_page", 1, \
+    "Sets the first leaderboard page which is scraped")
 flags.DEFINE_integer("last_page", None, \
     "Sets the last leaderboard page which is scraped")
 
@@ -51,10 +53,10 @@ def main(unused_argv):
 
     # Get top players on EUW Ranked/Solo Duo leaderboard
     summoners = u_gg.get_leaderboard(
-        page_start=1,
+        page_start=FLAGS.start_page,
         page_end=FLAGS.last_page,
         region="euw1",
-        max_workers=1)
+        max_workers=10)
     
     # Extract summoner names
     summoner_names = [s["summonerName"]
@@ -76,7 +78,7 @@ def main(unused_argv):
     
     print(matches)
     
-    # Download first game
+    # Download all games
     for game_id in matches:
         req = downloader.download(game_id)
         print('Replay DL Status:', game_id, req.content, req.status_code)
