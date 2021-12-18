@@ -136,8 +136,12 @@ class U_GG_API(object):
                     data = json.loads(data.content)
                     data = data["data"]["fetchPlayerMatchSummaries"]["matchSummaries"]
                 except Exception as exc:
-                    data = str(type(exc))
+                    # data = str(type(exc))
+                    data = None
+                    print("ERR:", exc)
                 finally:
+                    if data == None:
+                        continue
                     for match in data:
                         if type(match) == dict:
                             if "version" in match:
