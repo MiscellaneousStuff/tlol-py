@@ -58,7 +58,7 @@ class U_GG_API(object):
                 champ_ids[champ] = int(id)
         return champ_ids
 
-    def get_leaderboard(self, page_start=1, page_end=1, region="euw1", max_workers=1):
+    def get_leaderboard(self, page_start=1, page_end=1, region="euw1", max_workers=1, delay=0.5):
         """Returns a list of summoner names from the Ranked Solo/Duo
         leaderboard for a specified region. Supports multiple workers."""
         players = []
@@ -76,7 +76,8 @@ class U_GG_API(object):
             future_to_summoner_name = (executor.submit(
                 self.handle_req,
                 self.base_url,
-                req_body(page)
+                req_body(page),
+                delay
             ) for page in range(page_start, page_end+1))
             for future in concurrent.futures.as_completed(future_to_summoner_name):
                 try:
@@ -97,7 +98,8 @@ class U_GG_API(object):
             outpath="",
             win_only=False,
             max_workers=1,
-            seasonIds=[16]):
+            seasonIds=[16],
+            delay=0.5):
         """
         Returns a list of unique Game IDs matching the given criteria.
         Only checks the first page of search results to simply the requests.
@@ -128,17 +130,16 @@ class U_GG_API(object):
             future_to_match_id = (executor.submit(
                 self.handle_req,
                 self.base_url,
-                matches_req_body(name)
+                matches_req_body(name),
+                delay
             ) for name in summoner_names)
             for future in concurrent.futures.as_completed(future_to_match_id):
                 try:
-                    data = future.result()
-                    data = json.loads(data.content)
-                    data = data["data"]["fetchPlayerMatchSummaries"]["matchSummaries"]
+                    a_data = future.result()
+                    b_data = json.loads(a_data.content)
+                    data = b_data["data"]["fetchPlayerMatchSummaries"]["matchSummaries"]
                 except Exception as exc:
-                    # data = str(type(exc))
                     data = None
-                    print("ERR:", exc)
                 finally:
                     if data == None:
                         continue
