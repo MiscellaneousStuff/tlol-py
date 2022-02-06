@@ -54,13 +54,13 @@ def main(unused_argv):
     print('game_ids:', game_ids)
     for game_id in game_ids:
         metadata, _ = scraper.get_metadata(game_id)
-        seconds = metadata["gameLength"] / (1000) #  * 60)
+        seconds = (metadata["gameLength"] // 1000) - 1
 
         # NOTE: Change this to `end_time=seconds` to scrape the full replay
         #       This is the number of seconds of the replay to scrape
         end_time = seconds if FLAGS.end_time == -1 else FLAGS.end_time
 
-        print('game_id:', game_id)
+        print('GameID:', game_id, metadata["gameLength"])
         scraper.scrape(
             game_id=game_id,
             end_time=end_time,
