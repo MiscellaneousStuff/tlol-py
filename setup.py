@@ -55,7 +55,9 @@ setup(
         'tlol.bin',
         'tlol.datasets',
         'tlol.replays',
-        'tlol.stats'
+        'tlol.stats',
+        'tlol.models',
+        'tlol.lib'
     ],
     install_requires=[
         'absl-py',
