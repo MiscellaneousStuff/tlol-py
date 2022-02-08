@@ -297,10 +297,11 @@ def insert_game(cur_fi, cur):
             insert_objs(game_id, obs, cur, time, "missiles")
             insert_objs(game_id, obs, cur, time, "others")
 
-def convert_dataset(json_dir, db_dir):
-    json_files = os.listdir(json_dir)[0:1]
+def convert_dataset(json_path, db_dir):
+    region, game_id = \
+        os.path.basename(json_path).split(".json")[0].split("-")
+    db_path = os.path.join(db_dir, f"{region}-{game_id}.db")
 
-    db_path = os.path.join(db_dir, 'replay.db')
     con = sqlite3.connect(db_path)
     cur = con.cursor()
     cur.execute(CREATE_GAME_TABLE)
@@ -310,12 +311,10 @@ def convert_dataset(json_dir, db_dir):
 
     cur.execute("BEGIN;")
 
-    for json_fi in json_files:
-        cur_fi = os.path.join(json_dir, json_fi)
-        try:
-            insert_game(cur_fi, cur)
-        except Exception as e:
-            print(e)
+    try:
+        insert_game(json_path, cur)
+    except Exception as e:
+        print(e)
     
     cur.execute("COMMIT;")
 
