@@ -5,7 +5,7 @@ It provides a set of utility methods and classes to deal with League of Legends
 game playing, deep learning datasets and provides a library to build a deep learning
 agent which can play League of Legends.
 
-This module is currently updated to patch `11.23`.
+This module is currently updated to patch `12.2`.
 
 ## About
 
