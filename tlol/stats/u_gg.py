@@ -142,7 +142,7 @@ class U_GG_API(object):
                     data = None
                 finally:
                     if data == None:
-                        continue
+                        pass
                     for match in data:
                         if type(match) == dict:
                             if "version" in match:
