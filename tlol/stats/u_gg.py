@@ -143,15 +143,16 @@ class U_GG_API(object):
                 finally:
                     if data == None:
                         pass
-                    for match in data:
-                        if type(match) == dict:
-                            if "version" in match:
-                                if match["version"] == target_patch:
-                                    if (win_only and match["win"]) or (not win_only):
-                                        match_ids.add(match["matchId"])
-                                        if outpath:
-                                            with open(outpath, "a+") as f:
-                                                f.write(str(match["matchId"]) + "\n")
+                    else:
+                        for match in data:
+                            if type(match) == dict:
+                                if "version" in match:
+                                    if match["version"] == target_patch:
+                                        if (win_only and match["win"]) or (not win_only):
+                                            match_ids.add(match["matchId"])
+                                            if outpath:
+                                                with open(outpath, "a+") as f:
+                                                    f.write(str(match["matchId"]) + "\n")
         return match_ids
 
     def handle_req(self, url, body, delay=0.5):
