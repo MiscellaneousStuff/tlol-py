@@ -32,15 +32,24 @@ from tlol.datasets.convertor import convert_dataset
 
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string("json_dir",     None, "Directory of the source *.json replay files")
-flags.DEFINE_string("db_dir",       None, "Directory of the output *.db replay SQLite database")
-flags.DEFINE_integer("max_workers", 4,    "(Optional) Maximum threads to generate DBs")
+flags.DEFINE_string("json_dir",     None,  "Directory of the source *.json replay files")
+flags.DEFINE_string("db_dir",       None,  "Directory of the output *.db replay SQLite database")
+flags.DEFINE_string("idxs",         None,  "(Optional) Only convert these files")
+flags.DEFINE_string("region",       "EUW", "(Default: EUW) Game region")
+flags.DEFINE_integer("max_workers", 4,     "(Optional) Maximum threads to generate DBs")
 
 flags.mark_flag_as_required("json_dir")
 flags.mark_flag_as_required("db_dir")
 
 def main(unused_argv):
     jsons = os.listdir(FLAGS.json_dir)
+
+    if FLAGS.idxs:
+        game_ids = [os.path.basename(fi).split(".")[0].split("-")[1]
+                    for fi in jsons]
+        idxs = FLAGS.idxs.split(",")
+        jsons = set(game_ids).intersection(idxs)
+        jsons = [f"{FLAGS.region}1-{game_id}.json" for game_id in jsons]
 
     with concurrent.futures.ProcessPoolExecutor(max_workers=FLAGS.max_workers) as executor:
         future_game_insert_to_sql = (executor.submit(
