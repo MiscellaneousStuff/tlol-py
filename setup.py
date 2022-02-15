@@ -56,7 +56,7 @@ setup(
         'tlol.datasets',
         'tlol.replays',
         'tlol.stats',
-        'tlol.models',
+        #'tlol.models',
         'tlol.lib'
     ],
     install_requires=[
