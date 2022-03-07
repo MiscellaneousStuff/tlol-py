@@ -11,6 +11,8 @@ To use this module, go to the `releases` section of the
 [TLoL Scraper](https://github.com/MiscellaneousStuff/tlol-scraper)
 repo and download the most recent release.
 
+This module now includes a trained model which can play Jinx!
+
 ## About
 
 Disclaimer: This project is not affiliated with Riot Games in any way.

@@ -19,25 +19,26 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-"""Machine learning model which can play Miss Fortune autonomously."""
+"""Machine learning model which can play Jinx autonomously."""
 
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import pandas as pd
+import numpy as np
 
-class MFModel(nn.Module):
-    def __init__(self, ins, model_size, n_layers, dropout, outs):
-        super().__init__()
-        self.dropout = dropout
-        self.lstm = \
-            nn.LSTM(
-                ins, model_size, batch_first=True,
-                bidirectional=True, num_layers=n_layers,
-                dropout=dropout)
-        self.w1 = nn.Linear(model_size * 2, outs)
-    
+class Model(nn.Module):
+    def __init__(self, in_dim, out_dim):
+        super(Model, self).__init__()
+        self.out_dim = out_dim
+        self.fc1 = nn.Linear(in_dim, in_dim // 2)
+        self.fc2 = nn.Linear(in_dim // 2, in_dim // 4)
+        self.fc3 = nn.Linear(in_dim // 4, out_dim)
+
     def forward(self, x):
-        x = F.dropout(x, self.dropout, training=self.training)
-        x, _ = self.lstm(x)
-        x = F.dropout(x, self.dropout, training=self.training)
-        return self.w1(x)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        x = F.log_softmax(x, dim=1)
+        return x
