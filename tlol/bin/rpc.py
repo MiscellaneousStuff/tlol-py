@@ -37,7 +37,7 @@ from tlol.models.jinx_model import Model
 FLAGS = flags.FLAGS
 flags.DEFINE_string("model_path", None, "Trained Jinx PyTorch model weights *.pt")
 flags.DEFINE_string("host", "0.0.0.0", "ZeroRPC Host Address")
-flags.DEFINE_string("port", 4242, "ZeroRPC Port Number")
+flags.DEFINE_int("port", 4242, "ZeroRPC Port Number")
 
 class JinxModelRPC(object):
     def __init__(self, model_path):
