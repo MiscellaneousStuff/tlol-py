@@ -22,6 +22,10 @@ repo and download the most recent release.
 
 This module now includes a trained model which can play Jinx!
 
+A full explanation of how this repository works can be found in
+[this](https://miscellaneousstuff.github.io/project/2021/11/19/tlol-part-6-dataset-generation.html)
+blog post.
+
 ## About
 
 Disclaimer: This project is not affiliated with Riot Games in any way.
