@@ -22,7 +22,6 @@
 """Counts the total number of frames for a converted ML dataset."""
 
 import os
-import pickle
 import pandas as pd
 
 from absl import app
