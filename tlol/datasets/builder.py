@@ -203,44 +203,28 @@ def get_target_idx(\
     tm          = row["time"]
     target_type = row["target_type"]
     target_id   = row["target_id"]
+
     if target_type == "champs":
-        cur_units  = enemy_champs_df_[\
-            enemy_champs_df_["time"] == tm]
-        cur_units  = cur_units.sort_values(["time", "x_z_diff_from_player"], ascending=True)
-        cur_units  = cur_units[
-            (cur_units["obj_type"] != 0)]
-        target_idx = cur_units[cur_units["net_id"] == target_id].index
-        target_idx = list(cur_units.index).index(target_idx) + 1
-        return target_idx
+        obj_df = enemy_champs_df_
     elif target_type == "minions":
-        cur_units  = enemy_minions_df_[\
-            enemy_minions_df_["time"] == tm]
-        cur_units  = cur_units.sort_values(["time", "x_z_diff_from_player"], ascending=True)
-        cur_units  = cur_units[
-            (cur_units["obj_type"] != 0)]
-        target_idx = cur_units[cur_units["net_id"] == target_id].index
-        print(">>> MINION TARGET -> CUR_UNITS, TARGET_IDX:", cur_units, target_idx)
-        target_idx = list(cur_units.index).index(target_idx) + 1
-        return target_idx
+        obj_df = enemy_minions_df_
     elif target_type == "jungle":
-        cur_units  = jungle_df_pre_[\
-            jungle_df_pre_["time"] == tm]
-        cur_units  = cur_units.sort_values(["time", "x_z_diff_from_player"], ascending=True)
-        cur_units  = cur_units[
-            (cur_units["obj_type"] != 0)]
-        target_idx = cur_units[cur_units["net_id"] == target_id].index
-        target_idx = list(cur_units.index).index(target_idx) + 1
-        return target_idx
+        obj_df = jungle_df_pre_
     elif target_type == "turrets":
-        cur_units  = enemy_turrets_df_[\
-            enemy_turrets_df_["time"] == tm]
-        cur_units  = cur_units.sort_values(["time", "x_z_diff_from_player"], ascending=True)
-        cur_units  = cur_units[
-            (cur_units["obj_type"] != 0)]
-        target_idx = cur_units[cur_units["net_id"] == target_id].index
+        obj_df = enemy_turrets_df_
+    else:
+        return 0
+
+    cur_units  = obj_df[obj_df["time"] == tm]
+    cur_units  = cur_units.sort_values(["time", "x_z_diff_from_player"], ascending=True)
+    cur_units  = cur_units[
+        (cur_units["obj_type"] != 0)]
+    target_idx = cur_units[cur_units["net_id"] == target_id].index
+    if target_idx in list(cur_units.index):
         target_idx = list(cur_units.index).index(target_idx) + 1
         return target_idx
-    return 0
+    else:
+        return 0
 
 def collate_observations(con, player, cutoff):
     champs_df   = get_champs_df(con, player, cutoff=cutoff)
@@ -329,6 +313,8 @@ def infer_actions(\
             else:
                 wards.append(objects_df[objects_df.index == allied_wards.index])
     except Exception as e:
+        import traceback
+        print("WARDS EXCEPTION:", traceback.format_exc())
         wards = []
         # print("PUSSIO:", e)
 
@@ -338,6 +324,8 @@ def infer_actions(\
     try:
         valid_aa_missile_dst_s = aa_missile_dst_s[aa_missile_dst_s["target_id"] != -1]
         auto_attack_df_base    = valid_aa_missile_dst_s[["time", "x_diff_from_player", "z_diff_from_player", "x_z_diff_from_player", "target_type", "target_id"]]
+
+        # Get auto attack target type
         target_type_enum = ["champs", "minions", "turrets", "jungle", "other"]
         new_target_type = \
             auto_attack_df_base["target_type"].apply(\
@@ -345,15 +333,22 @@ def infer_actions(\
                     target_type_enum.index(target_type_str)
                     if target_type_str in target_type_enum
                     else -1)
-        print("NEW TARGET TYPE:", new_target_type)
-        auto_attack_df_base["target_type"] = new_target_type
-        print("FINAL NEW TARGET TYPE:", new_target_type)
+        
+        # This one is inting everything else
+        # Get auto attack index
         target_idx = auto_attack_df_base.apply(\
             lambda row: get_target_idx(row, enemy_champs_df_, enemy_minions_df_, jungle_df_pre_, enemy_turrets_df_), axis=1)
+
+        # Set auto attack dataframe
         auto_attack_df_base = aa_missile_dst_s[["time", "target_type"]]
         auto_attack_df_base["target_idx"] = target_idx
         auto_attack_df_base["using_auto"]  = 1
+        auto_attack_df_base["target_type"] = new_target_type
+
+        # Drop unconfirmed auto attacks
         auto_attack_df_base = auto_attack_df_base.dropna()
+
+        print("FINAL TARGET TYPES:", auto_attack_df_base["target_type"])
     except Exception as e:
         # auto_attack_df_base = pd.DataFrame([])
         import traceback
@@ -875,7 +870,7 @@ def go(db_path, player, cutoff, out_path):
     missiles_df_, \
     combined_df_base = combine_obs_acts(champs_df, objects_df, missiles_df, player)
 
-    """
+    
     # Infer actions
     print("Combine acts...")
     combined_df_base = \
@@ -883,6 +878,7 @@ def go(db_path, player, cutoff, out_path):
             champs_df, objects_df, missiles_df, player, combined_df_base,
             enemy_champs_df_, enemy_minions_df_, jungle_df_, enemy_turrets_df_)
 
+    
     # Append global
     print("Append global...")
     first_minion_spawn = 60 + 5
@@ -892,14 +888,17 @@ def go(db_path, player, cutoff, out_path):
                else first_minion_spawn - tm)
     combined_df_base.insert(1, "minion_spawn_countdown", minion_spawn_times)
     combined_df_base = combined_df_base.fillna(0)
-    """
 
     # Save dataset...
     print("Save dataset...")
-    # print(combined_df_base.columns.values)
 
-    #pd.set_option('display.max_rows', None)
-    #print(combined_df_base.dtypes)
+    with open("cols.txt", "w") as f:
+        pd.set_option('display.max_rows', None)
+        f.write("\n".join(combined_df_base.columns.values.tolist()))
+
+    with open("types.txt", "w") as f:
+        pd.set_option('display.max_rows', None)
+        f.write("\n".join([str(t) for t in combined_df_base.dtypes.values.tolist()]))
     try:
         player_team = champs_df[champs_df["name"] == player].iloc[0]["team"]
         fname = os.path.basename(db_path).split(".")[0]

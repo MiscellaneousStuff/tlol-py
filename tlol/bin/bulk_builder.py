@@ -68,7 +68,8 @@ def main(unused_argv):
             try:
                 print(future.result())
             except Exception as exc:
-                print(exc)
+                import traceback
+                print("GLOBAL EXCEPTION:", traceback.format_exc())
             finally:
                 print("Cur replay done!")
 
