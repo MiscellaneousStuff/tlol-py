@@ -219,6 +219,7 @@ def get_target_idx(\
         cur_units  = cur_units[
             (cur_units["obj_type"] != 0)]
         target_idx = cur_units[cur_units["net_id"] == target_id].index
+        print(">>> MINION TARGET -> CUR_UNITS, TARGET_IDX:", cur_units, target_idx)
         target_idx = list(cur_units.index).index(target_idx) + 1
         return target_idx
     elif target_type == "jungle":
@@ -246,8 +247,10 @@ def collate_observations(con, player, cutoff):
     if isinstance(champs_df, int):
         if champs_df == -1:
             return -1
-    objects_df  = get_table_df(con, player, champs_df, "objects", cutoff=cutoff)
-    missiles_df = get_table_df(con, player, champs_df, "missiles", cutoff=cutoff)
+    # objects_df  = get_table_df(con, player, champs_df, "objects", cutoff=cutoff)
+    # missiles_df = get_table_df(con, player, champs_df, "missiles", cutoff=cutoff)
+    objects_df  = None
+    missiles_df = None
     return champs_df, objects_df, missiles_df
 
 def infer_actions(\
@@ -323,29 +326,42 @@ def infer_actions(\
         for i in range(len(allied_wards[:-1])):
             cur_tm  = allied_ward_tms.iloc[i]
             next_tm = allied_ward_tms.iloc[i + 1]
-            if next_tm - cur_tm < 60.0: # Ward duration never lower than 90secs, so this should be fine
+            if next_tm - cur_tm < 60.0: # Ward duration never lower than 90 secs, so this should be fine
                 pass
             else:
                 wards.append(objects_df[objects_df.index == allied_wards.index])
     except Exception as e:
-        print(e)
+        wards = []
+        # print("PUSSIO:", e)
+
+    # print("INFERRING ACTIONS PAST PUSSIO?")
 
     # Combine auto attacks
-    valid_aa_missile_dst_s = aa_missile_dst_s[aa_missile_dst_s["target_id"] != -1]
-    auto_attack_df_base    = valid_aa_missile_dst_s[["time", "x_diff_from_player", "z_diff_from_player", "x_z_diff_from_player", "target_type", "target_id"]]
-    target_idx = auto_attack_df_base.apply(\
-        lambda row: get_target_idx(row, enemy_champs_df_, enemy_minions_df_, jungle_df_pre_, enemy_turrets_df_), axis=1)
-    target_type_enum = ["champs", "minions", "turrets", "jungle", "other"]
-    auto_attack_df_base = aa_missile_dst_s[["time", "target_type"]]
-    auto_attack_df_base["target_idx"] = target_idx
-    auto_attack_df_base["target_type"] = \
-        auto_attack_df_base["target_type"].apply(\
-            lambda target_type_str: \
-                target_type_enum.index(target_type_str)
-                if target_type_str in target_type_enum
-                else -1)
-    auto_attack_df_base["using_auto"] = 1
-    auto_attack_df_base = auto_attack_df_base.dropna()
+    try:
+        valid_aa_missile_dst_s = aa_missile_dst_s[aa_missile_dst_s["target_id"] != -1]
+        auto_attack_df_base    = valid_aa_missile_dst_s[["time", "x_diff_from_player", "z_diff_from_player", "x_z_diff_from_player", "target_type", "target_id"]]
+        target_type_enum = ["champs", "minions", "turrets", "jungle", "other"]
+        new_target_type = \
+            auto_attack_df_base["target_type"].apply(\
+                lambda target_type_str: \
+                    target_type_enum.index(target_type_str)
+                    if target_type_str in target_type_enum
+                    else -1)
+        print("NEW TARGET TYPE:", new_target_type)
+        auto_attack_df_base["target_type"] = new_target_type
+        print("FINAL NEW TARGET TYPE:", new_target_type)
+        target_idx = auto_attack_df_base.apply(\
+            lambda row: get_target_idx(row, enemy_champs_df_, enemy_minions_df_, jungle_df_pre_, enemy_turrets_df_), axis=1)
+        auto_attack_df_base = aa_missile_dst_s[["time", "target_type"]]
+        auto_attack_df_base["target_idx"] = target_idx
+        auto_attack_df_base["using_auto"]  = 1
+        auto_attack_df_base = auto_attack_df_base.dropna()
+    except Exception as e:
+        # auto_attack_df_base = pd.DataFrame([])
+        import traceback
+        print("AUTO:", traceback.format_exc(), auto_attack_df_base["target_type"])
+
+    print("AUTOS DONE")
 
     # Combine Q
     q_spell_df_base = player_df[player_df["q_cast"] == True]
@@ -376,6 +392,8 @@ def infer_actions(\
     e_spell_df_base = e_spell_df_base[["time", "e_x_diff_digital", "e_z_diff_digital"]]
     e_spell_df_base["using_e"] = 1
 
+    print("SPELLS DONE")
+
     # Combine flash
     if flashes:
         d_spell_df_base = pd.DataFrame(flashes)
@@ -393,6 +411,8 @@ def infer_actions(\
     f_spell_df_base = player_df[player_df["f_cast"] == True]
     f_spell_df_base = f_spell_df_base[["time"]]
     f_spell_df_base["using_f"] = 1
+
+    print(">>> PRE WARDING FINE!")
 
     # Combine warding
     ward_idxs = [w.name for w in wards]
@@ -438,6 +458,8 @@ def infer_actions(\
                 how="left",
                 suffixes=('_0' if i == 0 else '', f'_{i+1}'))
     combined_df_base = combined_df_base.fillna(0)
+    
+    print(">>> YE FINISH ACTIONS GEEZAH!")
 
     return combined_df_base
 
@@ -839,11 +861,13 @@ def go(db_path, player, cutoff, out_path):
 
     # Collate observations
     print("Collate obs...")
-    if collate_observations(con, player, cutoff) != -1:
-        champs_df, objects_df, missiles_df = collate_observations(con, player, cutoff)
+    collated_obs = collate_observations(con, player, cutoff)
+    if collated_obs != -1:
+        champs_df, objects_df, missiles_df = collated_obs
     else:
         return -1
 
+    """
     # Combine obs/acts
     print("Combine obs...")
     enemy_champs_df_, \
@@ -870,14 +894,36 @@ def go(db_path, player, cutoff, out_path):
                else first_minion_spawn - tm)
     combined_df_base.insert(1, "minion_spawn_countdown", minion_spawn_times)
     combined_df_base = combined_df_base.fillna(0)
-    
+    """
+
     # Save dataset...
     print("Save dataset...")
-    player_team = champs_df[champs_df["name"] == player].iloc[0]["team"]
-    fname = os.path.basename(db_path).split(".")[0]
-    combined_df_base = combined_df_base.astype("float16")
-    outname_pkl = f"./{fname}_{player}_{player_team}.pkl"
-    outname_pkl = os.path.join(out_path, outname_pkl)
-    combined_df_base.to_pickle(outname_pkl)
+    combined_df_base = champs_df
+    combined_df_base = combined_df_base.drop(\
+        labels=[
+            "name",
+            "obj_type",
+            "q_name",
+            "w_name",
+            "e_name",
+            "r_name",
+            "d_name",
+            "f_name"
+        ],
+        axis=1)
+    print(combined_df_base.columns.values)
 
+    pd.set_option('display.max_rows', None)
+    print(combined_df_base.dtypes)
+    try:
+        player_team = champs_df[champs_df["name"] == player].iloc[0]["team"]
+        fname = os.path.basename(db_path).split(".")[0]
+        combined_df_base = combined_df_base.astype("float16")
+        outname_pkl = f"./{fname}_{player}_{player_team}.pkl"
+        outname_pkl = os.path.join(out_path, outname_pkl)
+        print("saving:", combined_df_base.shape)
+        combined_df_base.to_pickle(outname_pkl)
+    except Exception as e:
+        import traceback
+        print("COULD NOT SAVE:", e, print(traceback.format_exc()))
     return 0

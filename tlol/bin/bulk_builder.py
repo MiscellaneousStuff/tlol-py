@@ -19,35 +19,58 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-"""Converts a SQLite database replay into a Numpy Array suitable for
+"""Converts an SQLite database replays into Numpy Arrays suitable for
 training machine learning models or performing bulk analysis."""
+
+import os
 
 from absl import app
 from absl import flags
-import os
 
 from tlol.datasets.builder import go
 
+import concurrent.futures
+
 FLAGS = flags.FLAGS
-flags.DEFINE_string("db_path", None,  "Path to replay")
-flags.DEFINE_string("out_path", None, "Output directory")
-flags.DEFINE_string("player", "jinx", "Player to tailor observations towards")
-flags.DEFINE_float("cutoff",  5.0,    "Timestep to start dataset from")
-flags.mark_flag_as_required("db_path")
-flags.mark_flag_as_required("out_path")
+flags.DEFINE_string("db_dir",   None,  "Directory of replay DBs to convert")
+flags.DEFINE_string("out_path", None,  "Output directory")
+flags.DEFINE_string("player", "jinx",  "Player to tailor observations towards")
+flags.DEFINE_float("cutoff",  5.0,     "Timestep to start dataset from")
+flags.DEFINE_integer("max_workers", 4, "Maximum number of workers to generate dataset")
 
-def main(unused_argv):
-    # DB construction settings
-    db_path  = FLAGS.db_path
-    player   = FLAGS.player
-    cutoff   = FLAGS.cutoff
-    out_path = FLAGS.out_path
-
+def go_wrapper(fi, db_dir, player, cutoff, out_path):
+    db_path = os.path.join(db_dir, fi)
+    print(f"Started: {db_path}")
     res = go(db_path, player, cutoff, out_path)
     if res == -1:
         print("Invalid replay:", os.path.basename(db_path))
     else:
-        print("Valid replay")
+        print("Valid replay:", os.path.basename(db_path))
+    return res
+
+def main(unused_argv):
+    fi_s     = os.listdir(FLAGS.db_dir)
+    player   = FLAGS.player
+    cutoff   = FLAGS.cutoff
+    out_path = FLAGS.out_path
+
+    with concurrent.futures.ProcessPoolExecutor(max_workers=FLAGS.max_workers) as executor:
+        future_res = (executor.submit(
+            go_wrapper,
+            fi,
+            FLAGS.db_dir,
+            player,
+            cutoff,
+            out_path
+        ) for fi in fi_s)
+        for future in concurrent.futures.as_completed(future_res):
+            print(future.result())
+            try:
+                print(future.result())
+            except Exception as exc:
+                print(exc)
+            finally:
+                print("Cur replay done!")
 
 def entry_point():
     app.run(main)
