@@ -892,13 +892,6 @@ def go(db_path, player, cutoff, out_path):
     # Save dataset...
     print("Save dataset...")
 
-    with open("cols.txt", "w") as f:
-        pd.set_option('display.max_rows', None)
-        f.write("\n".join(combined_df_base.columns.values.tolist()))
-
-    with open("types.txt", "w") as f:
-        pd.set_option('display.max_rows', None)
-        f.write("\n".join([str(t) for t in combined_df_base.dtypes.values.tolist()]))
     try:
         player_team = champs_df[champs_df["name"] == player].iloc[0]["team"]
         fname = os.path.basename(db_path).split(".")[0]
@@ -910,4 +903,5 @@ def go(db_path, player, cutoff, out_path):
     except Exception as e:
         import traceback
         print("COULD NOT SAVE:", e, print(traceback.format_exc()))
+        
     return 0
