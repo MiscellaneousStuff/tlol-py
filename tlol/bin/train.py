@@ -37,7 +37,7 @@ def main(unused_argv):
     db_dir = FLAGS.db_dir
     
     dataset = TLoLReplayDataset(db_dir)
-    print(dataset[0].shape)
+    print(dataset[1]["raw"].shape)
 
 def entry_point():
     app.run(main)

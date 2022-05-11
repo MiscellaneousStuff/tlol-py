@@ -28,23 +28,6 @@ import pandas as pd
 from tlol.datasets  import lib
 
 
-class TLoLReplayGame(object):
-    """Encapsulation of a TLoL Replay Dataset observation. This will
-    contain at least the in-game actions and observations during a period
-    of time.
-    
-    Attributes:
-        obs:  In-game observations recorded during the entire observation
-        acts: Actions taken by players during the entire observation
-    
-    May contain other attributes as well depending on the dataset. This is
-    just the list of minimal attributes per observation."""
-    def __init__(self, dataframe):
-        self.obs = None
-        self.act = None
-        self.raw = None
-
-
 class TLoLReplayDataset(torch.utils.data.Dataset):
     """Encapsulation of a TLoL Replay Dataset used to train machine learning
     agents which can play League of Legends autonomously."""
@@ -62,5 +45,7 @@ class TLoLReplayDataset(torch.utils.data.Dataset):
         cur_path = os.path.join(
             self.root_dir, self.files[i])
         game_data   = pd.read_pickle(cur_path)
-        game_object = TLoLReplayGame(game_data)
+        game_object = {
+            "raw": game_data
+        }
         return game_object
