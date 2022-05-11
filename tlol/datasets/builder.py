@@ -19,7 +19,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-"""Converts an SQLite database replay into a Numpy Array suitable for
+"""Converts an SQLite database replay into a NumPy Array suitable for
 training machine learning models or performing bulk analysis."""
 
 import sqlite3
