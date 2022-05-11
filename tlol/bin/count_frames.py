@@ -43,8 +43,9 @@ def main(unused_argv):
         cur_frames, cols = game_data.shape
         print(f"Game {i} frames: {cur_frames}, cols: {cols}")
         total_frames += cur_frames
-    print(f"Total frames: {total_frames}")
-    print(f"Mean frames:  {total_frames / len(files)}")
+
+    print(f"Total Frames: {total_frames}")
+    print(f"Mean Frames:  {total_frames / len(files)}")
 
 def entry_point():
     app.run(main)
