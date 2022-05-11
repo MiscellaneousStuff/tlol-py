@@ -37,6 +37,8 @@ flags.DEFINE_string("out_path", None,  "Output directory")
 flags.DEFINE_string("player", "jinx",  "Player to tailor observations towards")
 flags.DEFINE_float("cutoff",  5.0,     "Timestep to start dataset from")
 flags.DEFINE_integer("max_workers", 4, "Maximum number of workers to generate dataset")
+flags.mark_flag_as_required("db_dir")
+flags.mark_flag_as_required("out_path")
 
 def go_wrapper(fi, db_dir, player, cutoff, out_path):
     db_path = os.path.join(db_dir, fi)
