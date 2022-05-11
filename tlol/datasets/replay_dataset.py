@@ -87,13 +87,6 @@ def combine_fixed_length(tensor_list, length):
     n = total_length // length
     return tensor.view(n, length, *tensor.size()[1:])
 
-def split_fixed_length(tensor, length):
-    total = tensor.size(0)
-    trunc = total - (total % length)
-    tensor = tensor[:trunc]
-    n = total // length
-    return tensor.view(n, length, *tensor.size()[1:])
-
 
 class TLoLReplayDataset(torch.utils.data.Dataset):
     """Encapsulation of a TLoL Replay Dataset used to train machine learning

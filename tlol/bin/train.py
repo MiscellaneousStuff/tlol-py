@@ -22,7 +22,9 @@
 """Train a machine learning model to play as Jinx on blue side for the
 first five minutes of a League of Legends match."""
 
-import os
+import math
+import random
+import numpy as np
 
 import torch
 
@@ -35,26 +37,55 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string("db_dir", None, "Directory of replay DBs to convert")
 flags.mark_flag_as_required("db_dir")
 
+def test(obs_s, act_s):
+    pass
+
+def train(obs_s, act_s):
+    pass
+
 def main(unused_argv):
     db_dir = FLAGS.db_dir
     
+    seed = 1
+    random.seed(seed)
+    torch.manual_seed(seed)
+    np.seed(seed)
+
     dataset = TLoLReplayDataset(db_dir)
     device = 'cuda' if torch.cuda.is_available() else "cpu"
 
     dataloader = torch.utils.data.DataLoader(
-        dataset,
-        shuffle=True,
-        pin_memory=(device=="cuda"),
-        collate_fn=dataset.collate_fixed_length,
-        batch_size=32,
-        num_workers=1)
+                    dataset,
+                    shuffle=True,
+                    pin_memory=(device=="cuda"),
+                    num_workers=6,
+                    batch_size=32,
+                    collate_fn=dataset.collate_fixed_length)
     
-    batch       = next(iter(dataloader))
-    batch_obs_s = batch["obs_s"]
-    batch_raw_s = batch["raw_s"]
-    batch_act_s = batch["act_s"]
+    train_end = int(len(dataset) * 0.9)
 
-    print(batch_obs_s.shape, batch_act_s.shape, batch_raw_s.shape)
+    train_set = torch.utils.data.Subset(
+        dataloader,
+        list(range(0, train_end)))
+    
+    test_set = torch.utils.data.Subset(
+        dataloader,
+        list(range(train_end, len(dataset))))
+
+    # batch = next(iter(dataloader))
+    batch_count = math.ceil(len(dataset) / 32)
+    for i, batch in enumerate(train_set):
+        print(f"{i+1}/{batch_count}")
+
+        batch_obs_s = batch["obs_s"]
+        batch_act_s = batch["act_s"]
+
+        obs_s = batch_obs_s[:, :, :].to(device)
+        act_s = batch_act_s[:, :, :].to(device)
+
+        train(obs_s, act_s)
+        test(obs_s, act_s)
+
 def entry_point():
     app.run(main)
 
