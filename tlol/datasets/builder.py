@@ -247,10 +247,8 @@ def collate_observations(con, player, cutoff):
     if isinstance(champs_df, int):
         if champs_df == -1:
             return -1
-    # objects_df  = get_table_df(con, player, champs_df, "objects", cutoff=cutoff)
-    # missiles_df = get_table_df(con, player, champs_df, "missiles", cutoff=cutoff)
-    objects_df  = None
-    missiles_df = None
+    objects_df  = get_table_df(con, player, champs_df, "objects", cutoff=cutoff)
+    missiles_df = get_table_df(con, player, champs_df, "missiles", cutoff=cutoff)
     return champs_df, objects_df, missiles_df
 
 def infer_actions(\
@@ -866,8 +864,7 @@ def go(db_path, player, cutoff, out_path):
         champs_df, objects_df, missiles_df = collated_obs
     else:
         return -1
-
-    """
+    
     # Combine obs/acts
     print("Combine obs...")
     enemy_champs_df_, \
@@ -878,6 +875,7 @@ def go(db_path, player, cutoff, out_path):
     missiles_df_, \
     combined_df_base = combine_obs_acts(champs_df, objects_df, missiles_df, player)
 
+    """
     # Infer actions
     print("Combine acts...")
     combined_df_base = \
@@ -898,23 +896,10 @@ def go(db_path, player, cutoff, out_path):
 
     # Save dataset...
     print("Save dataset...")
-    combined_df_base = champs_df
-    combined_df_base = combined_df_base.drop(\
-        labels=[
-            "name",
-            "obj_type",
-            "q_name",
-            "w_name",
-            "e_name",
-            "r_name",
-            "d_name",
-            "f_name"
-        ],
-        axis=1)
-    print(combined_df_base.columns.values)
+    # print(combined_df_base.columns.values)
 
-    pd.set_option('display.max_rows', None)
-    print(combined_df_base.dtypes)
+    #pd.set_option('display.max_rows', None)
+    #print(combined_df_base.dtypes)
     try:
         player_team = champs_df[champs_df["name"] == player].iloc[0]["team"]
         fname = os.path.basename(db_path).split(".")[0]
