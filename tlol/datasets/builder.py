@@ -316,9 +316,6 @@ def infer_actions(\
         import traceback
         print("WARDS EXCEPTION:", traceback.format_exc())
         wards = []
-        # print("PUSSIO:", e)
-
-    # print("INFERRING ACTIONS PAST PUSSIO?")
 
     # Combine auto attacks
     try:
@@ -347,12 +344,10 @@ def infer_actions(\
 
         # Drop unconfirmed auto attacks
         auto_attack_df_base = auto_attack_df_base.dropna()
-
-        print("FINAL TARGET TYPES:", auto_attack_df_base["target_type"])
     except Exception as e:
-        # auto_attack_df_base = pd.DataFrame([])
+        auto_attack_df_base = pd.DataFrame([])
         import traceback
-        print("AUTO:", traceback.format_exc(), auto_attack_df_base["target_type"])
+        print("AUTO EXCEPTION:", traceback.format_exc(), auto_attack_df_base["target_type"])
 
     print("AUTOS DONE")
 
@@ -869,7 +864,6 @@ def go(db_path, player, cutoff, out_path):
     other_df_, \
     missiles_df_, \
     combined_df_base = combine_obs_acts(champs_df, objects_df, missiles_df, player)
-
     
     # Infer actions
     print("Combine acts...")
@@ -877,7 +871,6 @@ def go(db_path, player, cutoff, out_path):
         infer_actions(\
             champs_df, objects_df, missiles_df, player, combined_df_base,
             enemy_champs_df_, enemy_minions_df_, jungle_df_, enemy_turrets_df_)
-
     
     # Append global
     print("Append global...")
@@ -902,6 +895,6 @@ def go(db_path, player, cutoff, out_path):
         combined_df_base.to_pickle(outname_pkl)
     except Exception as e:
         import traceback
-        print("COULD NOT SAVE:", e, print(traceback.format_exc()))
+        print("SAVE EXCEPTION:", e, print(traceback.format_exc()))
         
     return 0
