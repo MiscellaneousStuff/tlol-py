@@ -1,6 +1,6 @@
 # MIT License
 # 
-# Copyright (c) 2021 MiscellaneousStuff
+# Copyright (c) 2022 MiscellaneousStuff
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 """The library and base class for defining TLoL Replay Datasets.
 
 This generic class is provided for other datasets to inherit from as future
-datasets might have different characteristics among different TLoL Replay dataset.
+datasets might have different characteristics among different TLoL Replay datasets.
 """
 
 import enum
