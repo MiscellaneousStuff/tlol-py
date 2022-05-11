@@ -21,6 +21,10 @@
 # SOFTWARE.
 """Counts the total number of frames for a converted ML dataset."""
 
+import os
+import pickle
+import pandas as pd
+
 from absl import app
 from absl import flags
 
@@ -29,7 +33,17 @@ flags.DEFINE_string("db_dir", None, "Directory of replay DBs to convert")
 flags.mark_flag_as_required("db_dir")
 
 def main(unused_argv):
-    pass
+    db_dir = FLAGS.db_dir
+    files  = os.listdir(db_dir)
+
+    total_frames = 0
+    for i, fi in enumerate(files):
+        cur_path = os.path.join(db_dir, fi)
+        game_data = pd.read_pickle(cur_path)
+        cur_frames, cols = game_data.shape
+        print(f"Game {i} frames: {cur_frames}, cols: {cols}")
+        total_frames += cur_frames
+    print(f"Total frames: {total_frames}")
 
 def entry_point():
     app.run(main)
