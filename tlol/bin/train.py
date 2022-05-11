@@ -24,6 +24,8 @@ first five minutes of a League of Legends match."""
 
 import os
 
+import torch
+
 from absl import app
 from absl import flags
 
@@ -37,16 +39,22 @@ def main(unused_argv):
     db_dir = FLAGS.db_dir
     
     dataset = TLoLReplayDataset(db_dir)
+    device = 'cuda' if torch.cuda.is_available() else "cpu"
 
-    ds = dataset[0]
-    obs   = ds["obs"]
-    act   = ds["act"]
-    total = ds["raw"]
+    dataloader = torch.utils.data.DataLoader(
+        dataset,
+        shuffle=True,
+        pin_memory=(device=="cuda"),
+        collate_fn=dataset.collate_fixed_length,
+        batch_size=32,
+        num_workers=1)
+    
+    batch       = next(iter(dataloader))
+    batch_obs_s = batch["obs_s"]
+    batch_raw_s = batch["raw_s"]
+    batch_act_s = batch["act_s"]
 
-    print(act.columns.values)
-
-    # print(obs, act, total)
-
+    print(batch_obs_s.shape, batch_act_s.shape, batch_raw_s.shape)
 def entry_point():
     app.run(main)
 
