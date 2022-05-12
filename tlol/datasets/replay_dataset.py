@@ -22,8 +22,10 @@
 """Define a TLoL League of Legends replay dataset."""
 
 import os
-import torch
 import pandas as pd
+import numpy as np
+
+import torch
 
 from tlol.datasets  import lib
 
@@ -73,6 +75,17 @@ ACTION_FEATURES_TOTAL = TOTAL_ACTION_FEATURES
 
 TOTAL_FEATURES = OBS_FEATURES_TOTAL + ACTION_FEATURES_TOTAL
 
+def decollate_tensor(tensor, lengths):
+    b, s, d = tensor.size()
+    tensor = tensor.view(b*s, d)
+    results = []
+    idx = 0
+    for length in lengths:
+        assert idx + length <= b * s
+        results.append(tensor[idx:idx+length])
+        idx += length
+    return results
+
 def combine_fixed_length(tensor_list, length):
     total_length = sum(t.size(0) for t in tensor_list)
     if total_length % length != 0:
@@ -115,29 +128,33 @@ class TLoLReplayDataset(torch.utils.data.Dataset):
     
     @staticmethod
     def collate_fixed_length(batch):
-        batch_size = len(batch)
         raw_s = []
         obs_s = []
         act_s = []
 
         for ex in batch:
-            raw_s.append(ex["raw"].to_numpy())
-            obs_s.append(ex["obs"].to_numpy())
-            act_s.append(ex["act"].to_numpy())
+            raw_s.append(ex["raw"].to_numpy().astype(np.float32))
+            obs_s.append(ex["obs"].to_numpy().astype(np.float32))
+            # act_s.append(ex["act"].to_numpy().astype(np.float32))
+            act_s.append(ex["act"].to_numpy().astype(np.int64))
         
         raw_s = [torch.from_numpy(raw) for raw in raw_s]
         obs_s = [torch.from_numpy(obs) for obs in obs_s]
         act_s = [torch.from_numpy(act) for act in act_s]
 
+        lengths = [ex["raw"].shape[0] for ex in batch]
+
         # Number of 1/4 second observations per batch
         seconds = 6
         obs_sec = 4.4
         seq_len = int(seconds / (1 / obs_sec))
+        
+        # "raw_s": combine_fixed_length(raw_s, seq_len),
 
         result = {
-            "raw_s": combine_fixed_length(raw_s, seq_len),
-            "obs_s": combine_fixed_length(obs_s, seq_len),
-            "act_s": combine_fixed_length(act_s, seq_len)
+            "obs_s":   combine_fixed_length(obs_s, seq_len),
+            "act_s":   combine_fixed_length(act_s, seq_len),
+            "lengths": lengths
         }
 
         return result
