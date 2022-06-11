@@ -19,17 +19,35 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-"""The library and base class for defining TLoL Replay Datasets.
+"""Counts the total number of frames for a converted ML dataset."""
 
-This generic class is provided for other datasets to inherit from as future
-datasets might have different characteristics among different TLoL Replay datasets.
-"""
+import os
+import pandas as pd
 
-import enum
+from absl import app
+from absl import flags
 
+FLAGS = flags.FLAGS
+flags.DEFINE_string("db_dir", None, "Directory of replay DBs to convert")
+flags.mark_flag_as_required("db_dir")
 
-class TLoLDatasetType(enum.IntEnum):
-    """Inteded usage of the dataset."""
-    TRAIN = 0
-    DEV   = 1
-    TEST  = 2
+def main(unused_argv):
+    db_dir = FLAGS.db_dir
+    files  = os.listdir(db_dir)
+
+    total_frames = 0
+    for i, fi in enumerate(files):
+        cur_path = os.path.join(db_dir, fi)
+        game_data = pd.read_pickle(cur_path)
+        cur_frames, cols = game_data.shape
+        print(f"Game {i} frames: {cur_frames}, cols: {cols}")
+        total_frames += cur_frames
+
+    print(f"Total Frames: {total_frames}")
+    print(f"Mean Frames:  {total_frames / len(files)}")
+
+def entry_point():
+    app.run(main)
+
+if __name__ == "__main__":
+    app.run(main)

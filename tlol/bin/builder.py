@@ -19,17 +19,38 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-"""The library and base class for defining TLoL Replay Datasets.
+"""Converts a SQLite database replay into a Numpy Array suitable for
+training machine learning models or performing bulk analysis."""
 
-This generic class is provided for other datasets to inherit from as future
-datasets might have different characteristics among different TLoL Replay datasets.
-"""
+from absl import app
+from absl import flags
+import os
 
-import enum
+from tlol.datasets.builder import go
 
+FLAGS = flags.FLAGS
+flags.DEFINE_string("db_path", None,  "Path to replay")
+flags.DEFINE_string("out_path", None, "Output directory")
+flags.DEFINE_string("player", "jinx", "Player to tailor observations towards")
+flags.DEFINE_float("cutoff",  5.0,    "Timestep to start dataset from")
+flags.mark_flag_as_required("db_path")
+flags.mark_flag_as_required("out_path")
 
-class TLoLDatasetType(enum.IntEnum):
-    """Inteded usage of the dataset."""
-    TRAIN = 0
-    DEV   = 1
-    TEST  = 2
+def main(unused_argv):
+    # DB construction settings
+    db_path  = FLAGS.db_path
+    player   = FLAGS.player
+    cutoff   = FLAGS.cutoff
+    out_path = FLAGS.out_path
+
+    res = go(db_path, player, cutoff, out_path)
+    if res == -1:
+        print("Invalid replay:", os.path.basename(db_path))
+    else:
+        print("Valid replay")
+
+def entry_point():
+    app.run(main)
+
+if __name__ == "__main__":
+    app.run(main)

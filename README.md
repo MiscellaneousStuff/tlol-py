@@ -20,7 +20,13 @@ To use this module, go to the `releases` section of the
 [TLoL Scraper](https://github.com/MiscellaneousStuff/tlol-scraper)
 repo and download the most recent release.
 
-This module now includes a trained model which can play Jinx!
+Refer to [TLoL](https://github.com/MiscellaneousStuff/tlol)
+for information relating to large scale training and analysis
+datasets which are compatible with this module.
+
+A full explanation of how this repository works can be found in
+[this](https://miscellaneousstuff.github.io/project/2021/11/19/tlol-part-6-dataset-generation.html)
+blog post.
 
 ## About
 

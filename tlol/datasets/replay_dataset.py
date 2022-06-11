@@ -1,6 +1,6 @@
 # MIT License
 # 
-# Copyright (c) 2021 MiscellaneousStuff
+# Copyright (c) 2022 MiscellaneousStuff
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,56 +22,83 @@
 """Define a TLoL League of Legends replay dataset."""
 
 import os
-import torch
-import sqlite3
 import pandas as pd
+import numpy as np
 
-from tlol.lib.utils import split_fixed_length
+import torch
+
 from tlol.datasets  import lib
 
-def load_replay(replay_path):
-    """Returns a replay as a pandas dataframe."""
-    con = sqlite3.connect(replay_path)
-    df = pd.read_sql(\
-        """SELECT
-        time, obj_type, name, health, max_health, max_mana, team, crit,
-        ap, armour, mr, movement_speed, is_alive, position_x, position_z,
-        prev_position_x, prev_position_z, experience, mana_regen, health_regen,
-        targetable, recallState
-        FROM objects""",
-        con)
-    con.close()
-    return df
+UNIT_FEATURE_COUNTS = {
+    "champs":   65,
+    "minions":  34,
+    "turrets":  17,
+    "jungle":   17,
+    "others":   17,
+    "missiles": 21
+}
 
+UNIT_COUNTS = {
+    "champs":   5 * 2,
+    "minions":  30,
+    "turrets":  11 * 2,
+    "jungle":   24,
+    "others":   5,
+    "missiles": 30
+}
 
-class TLoLReplayObs(object):
-    """Encapsulation of a TLoL Replay Dataset observation. This will
-    contain at least the in-game actions and observations during a period
-    of time.
-    
-    Attributes:
-        obs:  In-game observations recorded during the entire observation
-        acts: Actions taken by players during the entire observation
-    
-    May contain other attributes as well depending on the dataset. This is
-    just the list of minimal attributes per observation."""
-    def __init__(self, obs, acts):
-        self._obs  = obs
-        self._acts = acts
+ACTION_FEATURE_COUNTS = {
+    "auto_attack":     3,
+    "q_spell":         1,
+    "w_spell":         3,
+    "e_spell":         3,
+    "flash_summoner":  3,
+    "alt_summoner":    1,
+    "warding":         3,
+    "recall":          1,
+    "moving":          2
+}
 
-    def get_dict(self):
-        return {
-            "obs":  self._obs,
-            "acts": self._acts
-        }
+GAME_TIME_COUNT   = 1
+MINION_SPAWN_TIME = 1
 
-    @property
-    def obs(self):
-        return self._obs
+UNIT_TYPES = UNIT_FEATURE_COUNTS.keys()
+TOTAL_UNIT_FEATURES = [UNIT_FEATURE_COUNTS[t] * UNIT_COUNTS[t]
+                             for t in UNIT_TYPES]
+TOTAL_UNIT_FEATURES   = sum(TOTAL_UNIT_FEATURES)
+TOTAL_ACTION_FEATURES = sum(ACTION_FEATURE_COUNTS.values())
 
-    @property
-    def acts(self):
-        return self._acts
+OBS_FEATURES_TOTAL    = GAME_TIME_COUNT + \
+                        MINION_SPAWN_TIME + \
+                        TOTAL_UNIT_FEATURES 
+ACTION_FEATURES_TOTAL = TOTAL_ACTION_FEATURES
+
+TOTAL_FEATURES = OBS_FEATURES_TOTAL + ACTION_FEATURES_TOTAL
+
+def decollate_tensor(tensor, lengths):
+    b, s, d = tensor.size()
+    tensor = tensor.view(b*s, d)
+    results = []
+    idx = 0
+    for length in lengths:
+        assert idx + length <= b * s
+        results.append(tensor[idx:idx+length])
+        idx += length
+    return results
+
+def combine_fixed_length(tensor_list, length):
+    total_length = sum(t.size(0) for t in tensor_list)
+    if total_length % length != 0:
+        pad_length = length - (total_length % length)
+        tensor_list = list(tensor_list) # copy
+        tensor_list.append(\
+            torch.zeros(
+                pad_length,*tensor_list[0].size()[1:],
+                dtype=tensor_list[0].dtype))
+        total_length += pad_length
+    tensor = torch.cat(tensor_list, 0)
+    n = total_length // length
+    return tensor.view(n, length, *tensor.size()[1:])
 
 
 class TLoLReplayDataset(torch.utils.data.Dataset):
@@ -79,28 +106,55 @@ class TLoLReplayDataset(torch.utils.data.Dataset):
     agents which can play League of Legends autonomously."""
     def __init__(self,
                  root_dir=None,
-                 idx_only=None,
                  dataset_type=lib.TLoLDatasetType.TRAIN):
-        self.dataset_type   = dataset_type
-
-        files = os.listdir(root_dir)
-
-        for fi in files:
-            cur_path = os.path.join(root_dir, fi)
+        self.dataset_type  = dataset_type
+        self.root_dir = root_dir
+        self.files = os.listdir(root_dir)
 
     def __len__(self):
-        return len(self.obs)
+        return len(self.files)
     
     def __getitem__(self, i):
-        return self.obs[i]
+        """Returns a NumPy array of the game at index `i`"""
+        cur_path = os.path.join(
+            self.root_dir, self.files[i])
+        game_data   = pd.read_pickle(cur_path)
+        game_object = {
+            "raw": game_data,
+            "obs": game_data.iloc[:, 0:OBS_FEATURES_TOTAL],
+            "act": game_data.iloc[:, OBS_FEATURES_TOTAL:TOTAL_FEATURES]
+        }
+        return game_object
     
     @staticmethod
     def collate_fixed_length(batch):
-        batch_size = len(batch)
-        obs  = torch.cat([torch.from_numpy(obs["obs"])  for obs in batch], 0)
-        acts = torch.cat([torch.from_numpy(obs["acts"]) for obs in batch], 0)
-        mb = batch_size * 8
+        raw_s = []
+        obs_s = []
+        act_s = []
 
-        return {
-            "obs":  split_fixed_length(obs, 1)[:mb],
-            "acts": split_fixed_length(acts, 1)[:mb]}
+        for ex in batch:
+            raw_s.append(ex["raw"].to_numpy().astype(np.float32))
+            obs_s.append(ex["obs"].to_numpy().astype(np.float32))
+            # act_s.append(ex["act"].to_numpy().astype(np.float32))
+            act_s.append(ex["act"].to_numpy().astype(np.int64))
+        
+        raw_s = [torch.from_numpy(raw) for raw in raw_s]
+        obs_s = [torch.from_numpy(obs) for obs in obs_s]
+        act_s = [torch.from_numpy(act) for act in act_s]
+
+        lengths = [ex["raw"].shape[0] for ex in batch]
+
+        # Number of 1/4 second observations per batch
+        seconds = 6
+        obs_sec = 4.4
+        seq_len = int(seconds / (1 / obs_sec))
+        
+        # "raw_s": combine_fixed_length(raw_s, seq_len),
+
+        result = {
+            "obs_s":   combine_fixed_length(obs_s, seq_len),
+            "act_s":   combine_fixed_length(act_s, seq_len),
+            "lengths": lengths
+        }
+
+        return result
