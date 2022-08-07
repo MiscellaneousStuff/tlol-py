@@ -27,11 +27,11 @@ import numpy as np
 
 import torch
 
-from tlol.datasets  import lib
+from tlol.datasets import lib
 
 UNIT_FEATURE_COUNTS = {
     "champs":   65,
-    "minions":  34,
+    "minions":  17,
     "turrets":  17,
     "jungle":   17,
     "others":   17,
@@ -40,7 +40,7 @@ UNIT_FEATURE_COUNTS = {
 
 UNIT_COUNTS = {
     "champs":   5 * 2,
-    "minions":  30,
+    "minions":  30 * 2,
     "turrets":  11 * 2,
     "jungle":   24,
     "others":   5,
@@ -68,6 +68,7 @@ TOTAL_UNIT_FEATURES = [UNIT_FEATURE_COUNTS[t] * UNIT_COUNTS[t]
 TOTAL_UNIT_FEATURES   = sum(TOTAL_UNIT_FEATURES)
 TOTAL_ACTION_FEATURES = sum(ACTION_FEATURE_COUNTS.values())
 
+OBS_START             = GAME_TIME_COUNT + MINION_SPAWN_TIME
 OBS_FEATURES_TOTAL    = GAME_TIME_COUNT + \
                         MINION_SPAWN_TIME + \
                         TOTAL_UNIT_FEATURES 
@@ -119,11 +120,37 @@ class TLoLReplayDataset(torch.utils.data.Dataset):
         cur_path = os.path.join(
             self.root_dir, self.files[i])
         game_data   = pd.read_pickle(cur_path)
+
+        champ_start   = OBS_START
+        champ_end     = champ_start + UNIT_FEATURE_COUNTS["champs"] * UNIT_COUNTS["champs"]
+
+        minion_start  = champ_end
+        minion_end    = minion_start + UNIT_FEATURE_COUNTS["minions"] * UNIT_COUNTS["minions"]
+        
+        turret_start  = minion_end
+        turret_end    = turret_start + UNIT_FEATURE_COUNTS["turrets"] * UNIT_COUNTS["turrets"]
+        
+        jungle_start  = turret_end
+        jungle_end    = jungle_start + UNIT_FEATURE_COUNTS["jungle"] * UNIT_COUNTS["jungle"]
+        
+        other_start   = champ_end
+        other_end     = other_start + UNIT_FEATURE_COUNTS["others"] * UNIT_COUNTS["others"]
+        
+        missile_start = other_start
+        missile_end   = missile_start + UNIT_FEATURE_COUNTS["missiles"] * UNIT_COUNTS["missiles"]
+
         game_object = {
-            "raw": game_data,
-            "obs": game_data.iloc[:, 0:OBS_FEATURES_TOTAL],
-            "act": game_data.iloc[:, OBS_FEATURES_TOTAL:TOTAL_FEATURES]
+            "raw":      game_data,
+            "obs":      game_data.iloc[:, 0:OBS_FEATURES_TOTAL],
+            "champs":   game_data.iloc[:, champ_start:champ_end],
+            "minions":  game_data.iloc[:, minion_start:minion_end],
+            "turrets":  game_data.iloc[:, turret_start:turret_end],
+            "jungle":   game_data.iloc[:, jungle_start:jungle_end],
+            "others":   game_data.iloc[:, other_start:other_end],
+            "missiles": game_data.iloc[:, missile_start:missile_end],
+            "act":      game_data.iloc[:, OBS_FEATURES_TOTAL:TOTAL_FEATURES]
         }
+        
         return game_object
     
     @staticmethod
