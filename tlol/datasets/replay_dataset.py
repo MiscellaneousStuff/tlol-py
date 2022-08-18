@@ -104,13 +104,21 @@ def combine_fixed_length(tensor_list, length):
 
 class TLoLReplayDataset(torch.utils.data.Dataset):
     """Encapsulation of a TLoL Replay Dataset used to train machine learning
-    agents which can play League of Legends autonomously."""
+    agents which can play League of Legends autonomously.
+    
+    Args:
+        obs_per_scene: Observations per scene identification. Set to zero
+        for no scene identification."""
+
     def __init__(self,
                  root_dir=None,
-                 dataset_type=lib.TLoLDatasetType.TRAIN):
+                 dataset_type=lib.TLoLDatasetType.TRAIN,
+                 obs_per_scene=0,
+                 ):
         self.dataset_type  = dataset_type
         self.root_dir = root_dir
         self.files = os.listdir(root_dir)
+        self.obs_per_scene = obs_per_scene
 
     def __len__(self):
         return len(self.files)
@@ -151,6 +159,26 @@ class TLoLReplayDataset(torch.utils.data.Dataset):
             "act":      game_data.iloc[:, OBS_FEATURES_TOTAL:TOTAL_FEATURES]
         }
         
+        if self.obs_per_scene > 0:
+            scenes = lib.get_scenes(game_object, self.obs_per_scene)
+            scenes = [[i] * self.obs_per_scene for i in scenes]
+            scenes = list(np.array(scenes).flat)
+            scenes = scenes[:game_data.shape[0]]
+
+            scene_idx_s = list(range(len(scenes)))
+            scene_idx_s = [[i] * self.obs_per_scene for i in scene_idx_s]
+            scene_idx_s = list(np.array(scene_idx_s).flat)
+            scene_idx_s = scene_idx_s[:game_data.shape[0]]
+
+            data = {
+                "scene_idx": scene_idx_s,
+                "scene": scenes
+            }
+
+            scenes_df = pd.DataFrame(data=data)
+
+            game_object["scenes"] = scenes_df
+
         return game_object
     
     @staticmethod
