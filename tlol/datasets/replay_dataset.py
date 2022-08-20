@@ -113,8 +113,7 @@ class TLoLReplayDataset(torch.utils.data.Dataset):
     def __init__(self,
                  root_dir=None,
                  dataset_type=lib.TLoLDatasetType.TRAIN,
-                 obs_per_scene=0,
-                 ):
+                 obs_per_scene=0):
         self.dataset_type  = dataset_type
         self.root_dir = root_dir
         self.files = os.listdir(root_dir)
@@ -182,7 +181,7 @@ class TLoLReplayDataset(torch.utils.data.Dataset):
         return game_object
     
     @staticmethod
-    def collate_fixed_length(batch):
+    def collate_fixed_length(batch, obs_sec=4.4, seconds=6):
         raw_s = []
         obs_s = []
         act_s = []
@@ -200,8 +199,8 @@ class TLoLReplayDataset(torch.utils.data.Dataset):
         lengths = [ex["raw"].shape[0] for ex in batch]
 
         # Number of 1/4 second observations per batch
-        seconds = 6
-        obs_sec = 4.4
+        seconds = seconds
+        obs_sec = obs_sec
         seq_len = int(seconds / (1 / obs_sec))
         
         # "raw_s": combine_fixed_length(raw_s, seq_len),
