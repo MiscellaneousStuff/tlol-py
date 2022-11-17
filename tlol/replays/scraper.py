@@ -75,16 +75,17 @@ class ReplayScraper(object):
 
     def run_scraper(self, output_path, end_time):
         replay_script_path = os.path.dirname(os.path.abspath(__file__))
-        replay_script_path = os.path.join(replay_script_path, "python set_replay.py")
-
+        replay_script_path = os.path.join(replay_script_path, "set_replay.py")
         replay_script_path = replay_script_path.replace("\\", "/")
+
+        replay_script_cmd  = replay_script_path
 
         args = [
             os.path.join(self.scraper_dir, "ConsoleApplication.exe"),
             output_path,
             str(end_time),
             str(self.replay_speed),
-            replay_script_path]
+            replay_script_cmd]
         print('scraper args:', args)
         subprocess.call(
             args,
