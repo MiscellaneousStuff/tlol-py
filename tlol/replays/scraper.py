@@ -60,13 +60,13 @@ class ReplayScraper(object):
     def run_client(self, replay_path):
         args = [
             str(os.path.join(self.game_dir, "League of Legends.exe")),
-            f'-GameBaseDir={self.game_dir}',
             replay_path,
             "-SkipRads",
             "-SkipBuild",
             "-EnableLNP",
             "-UseNewX3D=1",
             "-UseNewX3DFramebuffers=1"]
+        print('run lol client:', args)
         subprocess.Popen(
             args,
             stdout=subprocess.PIPE,
@@ -75,9 +75,8 @@ class ReplayScraper(object):
 
     def run_scraper(self, output_path, end_time):
         replay_script_path = os.path.dirname(os.path.abspath(__file__))
-        replay_script_path = os.path.join(replay_script_path, "set_replay.py")
+        replay_script_path = os.path.join(replay_script_path, "python set_replay.py")
 
-        print()
         replay_script_path = replay_script_path.replace("\\", "/")
 
         args = [
