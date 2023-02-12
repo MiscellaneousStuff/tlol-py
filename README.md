@@ -14,7 +14,7 @@ It provides a set of utility methods and classes to deal with League of Legends
 game playing, deep learning datasets and provides a library to build a deep learning
 agent which can play League of Legends.
 
-This module is currently updated to patch `12.22`.
+This module is currently updated to patch `13.3`.
 
 To use this module, go to the `releases` section of the
 [TLoL Scraper](https://github.com/MiscellaneousStuff/tlol-scraper)
@@ -47,6 +47,11 @@ You can install the TLoL python module from a local clone of the git repo:
 git clone https://github.com/MiscellaneousStuff/tlol-py.git
 pip install --upgrade tlol-py/
 ```
+
+## Usage
+
+To run an agent, make sure that your client is set to automatically log-in
+when it's opened.
 
 ## Config
 
