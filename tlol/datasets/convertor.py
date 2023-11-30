@@ -1,6 +1,6 @@
 # MIT License
 # 
-# Copyright (c) 2021 MiscellaneousStuff
+# Copyright (c) 2023 MiscellaneousStuff
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -297,17 +297,13 @@ def insert_game(cur_fi, cur):
             insert_objs(game_id, obs, cur, time, "missiles")
             insert_objs(game_id, obs, cur, time, "others")
 
-def convert_dataset(json_path, db_dir):
+def convert_dataset(json_path, db_dir, big_int=False):
     region, game_id = \
         os.path.basename(json_path).split(".json")[0].split("-")
     db_path = os.path.join(db_dir, f"{region}-{game_id}.db")
 
     con = sqlite3.connect(db_path)
     cur = con.cursor()
-    cur.execute(CREATE_GAME_TABLE)
-    cur.execute(CREATE_CHAMP_TABLE)
-    cur.execute(CREATE_MISSILE_TABLE)
-    cur.execute(CREATE_OBJ_TABLE)
 
     cur.execute("BEGIN;")
 
