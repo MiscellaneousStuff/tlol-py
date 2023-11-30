@@ -61,11 +61,18 @@ class ReplayScraper(object):
         args = [
             str(os.path.join(self.game_dir, "League of Legends.exe")),
             replay_path,
-            "-SkipRads",
+            self.game_dir,
+            "-Region=EUW",
+            "-PlatformID=EUW1",
+            "-Locale=en_GB",
             "-SkipBuild",
+            "-EnableCrashpad=true",
             "-EnableLNP",
-            "-UseNewX3D=1",
-            "-UseNewX3DFramebuffers=1"]
+            "-UseDX11=1:1",
+            "-UseMetal=0:1",
+            "-UseNewX3D",
+            "-UseNewX3DFramebuffers"
+        ]
         print('run lol client:', args)
         subprocess.Popen(
             args,
