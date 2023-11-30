@@ -1,4 +1,3 @@
-
 # MIT License
 # 
 # Copyright (c) 2023 MiscellaneousStuff
@@ -98,7 +97,7 @@ class ReplayScraper(object):
             args,
             cwd=self.scraper_dir)
 
-    def scrape(self, game_id, end_time, delay=2):
+    def scrape(self, game_id, end_time, delay=2, scraper=True):
         """Scrapes a *.rofl file.
         
         Scrapes an individual replay file using the League of Legends
@@ -116,10 +115,14 @@ class ReplayScraper(object):
         output_path = os.path.join(self.dataset_dir, output_fname)
 
         self.run_client(replay_path)
-        self.run_scraper(output_path, end_time)
+        if scraper:
+            self.run_scraper(output_path, end_time)
 
+        if scraper:
+            os.system("taskkill /f /im \"ConsoleApplication.exe\"")
+        else:
+            time.sleep(60 * 10) # Go to sleep for 10 mins during testing
         os.system("taskkill /f /im \"League of Legends.exe\"")
-        os.system("taskkill /f /im \"ConsoleApplication.exe\"")
         time.sleep(delay)
 
     def get_replay_ids(self):

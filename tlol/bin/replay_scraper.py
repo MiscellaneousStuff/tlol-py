@@ -36,7 +36,7 @@ flags.DEFINE_string("region",        "EUW", "Region of the replay files")
 flags.DEFINE_integer("replay_speed", 8,     "League client replay speed multiplier")
 flags.DEFINE_integer("end_time",     "-1",  "(Default: Full game) Set maximum replay length in seconds")
 flags.DEFINE_string("replay_idxs",   None,  "(Optional) Comma separated list of replays to scrape within `replay_dir`")
-
+flags.DEFINE_bool("use_scraper",     True,  "(Optional) Disable the scraper for debugging")
 flags.mark_flag_as_required('game_dir')
 flags.mark_flag_as_required('replay_dir')
 flags.mark_flag_as_required('dataset_dir')
@@ -71,7 +71,8 @@ def main(unused_argv):
         scraper.scrape(
             game_id=game_id,
             end_time=end_time,
-            delay=2)
+            delay=2,
+            scraper=FLAGS.use_scraper)
 
 def entry_point():
     app.run(main)
