@@ -68,7 +68,7 @@ def main(unused_argv):
     summoner_names = [s["summonerName"] if "summonerName" in s else ""
                     for s in summoners]
 
-    print(summoner_names)
+    print("Summoner names:", summoner_names)
 
     if not FLAGS.infile:
         # Get matches for above summoners matching specific criteria
@@ -79,7 +79,7 @@ def main(unused_argv):
             outpath="", # set the outfile to write the match ids to a file
             win_only=False,
             max_workers=FLAGS.max_workers,
-            seasonIds=[18],
+            seasonIds=[20, 21],
             delay=FLAGS.delay)
         matches = list(matches)
     else:

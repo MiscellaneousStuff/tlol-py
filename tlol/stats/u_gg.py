@@ -25,6 +25,7 @@ Provides methods to get players on the leaderboard, games which a player has
 played, champion statistics and more.
 
 u.gg season IDs:
+18 - Season 13
 17 - Season 12
 16 - Season 11
 """
@@ -82,10 +83,13 @@ class U_GG_API(object):
             for future in concurrent.futures.as_completed(future_to_summoner_name):
                 try:
                     data = future.result()
+                    # print("DATA:", data, data.text)
                     data = json.loads(data.content)
+                    # print("DATA:", data)
                     data = data["data"]["leaderboardPage"]["players"]
                 except Exception as exc:
                     data = str(type(exc))
+                    # print("ERR:", data)
                 finally:
                     players += data
 
@@ -141,6 +145,7 @@ class U_GG_API(object):
                 except Exception as exc:
                     data = None
                 finally:
+                    # print("data:", data)
                     if data == None:
                         pass
                     else:
@@ -156,13 +161,16 @@ class U_GG_API(object):
         return match_ids
 
     def handle_req(self, url, body, delay=0.5):
+        # print(url, body)
         req = requests.request(
             'POST',
             url,
             data=json.dumps(body),
             headers={
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15"
             }
         )
         time.sleep(delay)
+        # print(url) # , req.body)
         return req
