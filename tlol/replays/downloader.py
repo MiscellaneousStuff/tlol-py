@@ -1,4 +1,3 @@
-
 # MIT License
 # 
 # Copyright (c) 2023 MiscellaneousStuff
@@ -28,7 +27,7 @@ import requests
 import json
 import time
 import psutil
-
+import platform
 
 class ReplayDownloader(object):
     def __init__(self, remoting_auth_token=None, app_port=None):
@@ -44,7 +43,7 @@ class ReplayDownloader(object):
         for proc in psutil.process_iter():
             try:
                 n = proc.name()
-                if n == "LeagueClientUx.exe":
+                if "LeagueClientUx" in n:
                     cmdline = proc.cmdline()
                     port = None
                     tok = None
