@@ -59,7 +59,7 @@ class U_GG_API(object):
                 champ_ids[champ] = int(id)
         return champ_ids
 
-    def get_leaderboard(self, page_start=1, page_end=1, region="euw1", max_workers=1, delay=0.5):
+    def get_leaderboard(self, page_start=1, page_end=1, regionId="euw1", max_workers=1, delay=0.5):
         """Returns a list of summoner names from the Ranked Solo/Duo
         leaderboard for a specified region. Supports multiple workers."""
         players = []
@@ -69,7 +69,7 @@ class U_GG_API(object):
             "variables": {
                 "page": p,
                 "queueType": 420, # Ranked Solo/Duo
-                "regionId": region
+                "regionId": regionId
             }
         }
 
@@ -103,7 +103,8 @@ class U_GG_API(object):
             win_only=False,
             max_workers=1,
             seasonIds=[16],
-            delay=0.5):
+            delay=0.5,
+            regionId="euw1"):
         """
         Returns a list of unique Game IDs matching the given criteria.
         Only checks the first page of search results to simply the requests.
@@ -117,7 +118,7 @@ class U_GG_API(object):
                 "championId": [self.champ_ids[c] for c in champs],
                 "page": 1, # Finds max of 20 games of a single champ per patch (people rarely play more than this so to keep the code much simpler, I'm only checking a maximum of 20 games of the same champion per summoner per patch.)
                 "queueType": [420], # 420 = solo/duo
-                "regionId": "na1",
+                "regionId": regionId,
                 "role": [],
                 "seasonIds": seasonIds,
                 "summonerName": summoner_name

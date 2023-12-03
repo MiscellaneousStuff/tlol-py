@@ -42,6 +42,7 @@ flags.DEFINE_integer("max_workers", 10, "Max workers per process")
 flags.DEFINE_float("delay", 0.5, "Request delay")
 flags.DEFINE_string("outfile", "", "(Optional) Save match ID list to a text file")
 flags.DEFINE_string("infile", "", "(Optional) Use a text file of match IDs")
+flags.DEFINE_string("regionId", "euw1", "(Optional) Specify which region to download replays from")
 
 flags.DEFINE_integer("start_page", 1, \
     "Sets the first leaderboard page which is scraped")
@@ -59,9 +60,9 @@ def main(unused_argv):
     summoners = u_gg.get_leaderboard(
         page_start=FLAGS.start_page,
         page_end=FLAGS.last_page,
-        region="euw1",
         max_workers=FLAGS.max_workers,
-        delay=FLAGS.delay)
+        delay=FLAGS.delay,
+        regionId={FLAGS.regionId})
     
     # Extract summoner names
     print('Summoner count:', len(summoners))
@@ -80,7 +81,8 @@ def main(unused_argv):
             win_only=False,
             max_workers=FLAGS.max_workers,
             seasonIds=[20, 21],
-            delay=FLAGS.delay)
+            delay=FLAGS.delay,
+            regionId={FLAGS.regionId})
         matches = list(matches)
     else:
         with open(FLAGS.infile) as f:
