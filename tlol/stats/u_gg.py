@@ -117,7 +117,7 @@ class U_GG_API(object):
                 "championId": [self.champ_ids[c] for c in champs],
                 "page": 1, # Finds max of 20 games of a single champ per patch (people rarely play more than this so to keep the code much simpler, I'm only checking a maximum of 20 games of the same champion per summoner per patch.)
                 "queueType": [420], # 420 = solo/duo
-                "regionId": "euw1",
+                "regionId": "na1",
                 "role": [],
                 "seasonIds": seasonIds,
                 "summonerName": summoner_name

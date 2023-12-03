@@ -59,7 +59,7 @@ def main(unused_argv):
     summoners = u_gg.get_leaderboard(
         page_start=FLAGS.start_page,
         page_end=FLAGS.last_page,
-        region="euw1",
+        region="na1",
         max_workers=FLAGS.max_workers,
         delay=FLAGS.delay)
     
@@ -96,9 +96,9 @@ def main(unused_argv):
     print(matches)
 
     # Download all games
-    for game_id in matches:
+    for i, game_id in enumerate(matches):
         req = downloader.download(game_id)
-        print('Replay DL Status:', game_id, req.content, req.status_code)
+        print(f'{i}/{len(matches)} Replay DL Status:', game_id, req.content, req.status_code)
 
 def entry_point():
     app.run(main)
