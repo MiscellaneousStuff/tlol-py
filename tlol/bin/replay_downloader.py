@@ -59,7 +59,7 @@ def main(unused_argv):
     summoners = u_gg.get_leaderboard(
         page_start=FLAGS.start_page,
         page_end=FLAGS.last_page,
-        region="na1",
+        region="euw1",
         max_workers=FLAGS.max_workers,
         delay=FLAGS.delay)
     
