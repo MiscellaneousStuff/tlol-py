@@ -62,10 +62,10 @@ def main(unused_argv):
         page_end=FLAGS.last_page,
         max_workers=FLAGS.max_workers,
         delay=FLAGS.delay,
-        regionId={FLAGS.regionId})
+        regionId=FLAGS.regionId)
     
     # Extract summoner names
-    print('Summoner count:', len(summoners))
+    print('Summoner count:', len(summoners), summoners)
     summoner_names = [s["summonerName"] if "summonerName" in s else ""
                     for s in summoners]
 
@@ -82,7 +82,7 @@ def main(unused_argv):
             max_workers=FLAGS.max_workers,
             seasonIds=[20, 21],
             delay=FLAGS.delay,
-            regionId={FLAGS.regionId})
+            regionId=FLAGS.regionId)
         matches = list(matches)
     else:
         with open(FLAGS.infile) as f:
