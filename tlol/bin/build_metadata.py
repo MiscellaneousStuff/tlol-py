@@ -21,6 +21,11 @@
 # SOFTWARE.
 """Builds an SQLite database from ROFL file embedded JSON data for analysis."""
 
+import json
+import sqlite3
+
+import os
+
 from absl import app
 from absl import flags
 
@@ -28,26 +33,57 @@ from tlol.replays.scraper import ReplayScraper
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string("replay_dir", None,  "League of Legends *.rofl replay directory")
-flags.DEFINE_string("region",     "EUW", "Region of the replay files")
+flags.DEFINE_integer("max_games", -1,    "(Optional) Maximum number of replays to build metadata for")
 flags.mark_flag_as_required('replay_dir')
 
 def main(unused_argv):
+    # Set up SQLite database
+    conn = sqlite3.connect('ezreal_players.db')
+    c = conn.cursor()
+
+    # Create table
+    c.execute('''CREATE TABLE IF NOT EXISTS players
+                 (game_id text, kills integer, deaths integer, gold_earned integer, damage_dealt integer, time_spent_dead integer)''')
+    
     scraper = ReplayScraper(
         game_dir="",
         replay_dir=FLAGS.replay_dir,
         dataset_dir="",
         scraper_dir="",
-        region=FLAGS.region,
+        region="",
         replay_speed=0)
 
-    game_ids = scraper.get_replay_ids()
+    replays = os.listdir(FLAGS.replay_dir)
+    replays = replays[0:FLAGS.max_games]
 
-    print('game_ids:', game_ids)
-    for game_id in game_ids:
-        metadata, _ = scraper.get_metadata(game_id)
+    print('game_ids:', replays)
+    for replay_path in replays:
+        full_game_id = replay_path.replace(".rofl", "")
+        metadata, _ = scraper.get_metadata(
+            replay_path,
+            path=True)
         seconds = (metadata["gameLength"] // 1000) - 1
 
-        print("metadata:", metadata)
+         # Extract Ezreal player data
+        stats = json.loads(metadata['statsJson'])
+        for player in stats:
+            if 'Ezreal' in player['SKIN']:
+                # Extract relevant fields
+                kills = player.get('CHAMPIONS_KILLED', 0)
+                deaths = player.get('NUM_DEATHS', 0)
+                gold_earned = player.get('GOLD_EARNED', 0)
+                damage_dealt = player.get('PHYSICAL_DAMAGE_DEALT_TO_CHAMPIONS', 0)
+                time_spent_dead = player.get('TOTAL_TIME_SPENT_DEAD', 0)
+
+                # Insert into database
+                c.execute("INSERT INTO players VALUES (?, ?, ?, ?, ?, ?)",
+                          (full_game_id, kills, deaths, gold_earned, damage_dealt, time_spent_dead))
+                
+        # print("metadata:", seconds, metadata, "\n\n")
+    
+    # Save (commit) the changes and close the connection
+    conn.commit()
+    conn.close()
 
 def entry_point():
     app.run(main)

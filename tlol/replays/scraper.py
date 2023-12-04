@@ -134,10 +134,15 @@ class ReplayScraper(object):
         ids = [fname.split(".")[0].split("-")[1] for fname in ids]
         return ids
     
-    def get_metadata(self, game_id):
-        replay_fname = f"{self.region}1-{game_id}.rofl"
-        replay_path  = os.path.join(self.replay_dir, replay_fname)
-        print(os.path.join(self.replay_dir, replay_fname))
+    def get_metadata(self, game_id, path=False):
+        if path:
+            replay_fname = game_id
+            replay_path  = game_id
+            print(replay_fname)
+        else:    
+            replay_fname = f"{self.region}1-{game_id}.rofl"
+            replay_path  = os.path.join(self.replay_dir, replay_fname)
+            print(os.path.join(self.replay_dir, replay_fname))
 
         with open(replay_path, "rb") as f:
             f.seek(262)
