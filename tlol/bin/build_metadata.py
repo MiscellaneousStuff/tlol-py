@@ -47,10 +47,6 @@ def main(unused_argv):
     # Set up SQLite database
     conn = sqlite3.connect('ezreal_players.db')
     c = conn.cursor()
-
-    # Create table
-    # c.execute('''CREATE TABLE IF NOT EXISTS players
-    #              (game_id text, team INTEGER, seconds real, kills integer, deaths integer, gold_earned integer, damage_dealt integer, time_spent_dead integer, win text)''')
     
     c.execute(SQL_METADATA_TABLE)
 
@@ -74,7 +70,6 @@ def main(unused_argv):
             path=True)
         if metadata == None:
             continue
-        seconds = (metadata["gameLength"] // 1000) - 1
 
          # Extract Ezreal player data
         stats = json.loads(metadata['statsJson'])
@@ -88,22 +83,11 @@ def main(unused_argv):
                     val = player.get(json_field, placeholder)
                     vals.append(val)
 
-                    # # Extract relevant fields
-                    # kills = player.get('CHAMPIONS_KILLED', 0)
-                    # team = player.get('TEAM', 0)
-                    # deaths = player.get('NUM_DEATHS', 0)
-                    # gold_earned = player.get('GOLD_EARNED', 0)
-                    # damage_dealt = player.get('PHYSICAL_DAMAGE_DEALT_TO_CHAMPIONS', 0)
-                    # time_spent_dead = player.get('TOTAL_TIME_SPENT_DEAD', 0)
-                    # win = player.get('WIN', '')
-
                 # # Insert into database
                 question_marks = ",".join(["?" for f in range(len(SQL_FIELDS))])
                 c.execute(f"INSERT INTO players VALUES ({question_marks})", tuple(vals))
                 
                 break
-
-        # print("metadata:", seconds, metadata, "\n\n")
     
     # Save (commit) the changes and close the connection
     conn.commit()
