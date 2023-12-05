@@ -135,27 +135,30 @@ class ReplayScraper(object):
         return ids
     
     def get_metadata(self, game_id, path=False):
-        if path:
-            replay_fname = game_id
-            replay_path  = game_id
-            print(replay_fname)
-        else:    
-            replay_fname = f"{self.region}1-{game_id}.rofl"
-            replay_path  = os.path.join(self.replay_dir, replay_fname)
-            print(os.path.join(self.replay_dir, replay_fname))
+        try:
+            if path:
+                replay_fname = game_id
+                replay_path  = game_id
+                print(replay_fname)
+            else:    
+                replay_fname = f"{self.region}1-{game_id}.rofl"
+                replay_path  = os.path.join(self.replay_dir, replay_fname)
+                print(os.path.join(self.replay_dir, replay_fname))
 
-        with open(replay_path, "rb") as f:
-            f.seek(262)
-            length_field_buffer = f.read(26)
-            metadata_offset = length_field_buffer[6:10]
-            metadata_length = length_field_buffer[10:14]
+            with open(replay_path, "rb") as f:
+                f.seek(262)
+                length_field_buffer = f.read(26)
+                metadata_offset = length_field_buffer[6:10]
+                metadata_length = length_field_buffer[10:14]
 
-            metadata_offset = int.from_bytes(metadata_offset, byteorder='little')
-            metadata_length = int.from_bytes(metadata_length, byteorder='little')
+                metadata_offset = int.from_bytes(metadata_offset, byteorder='little')
+                metadata_length = int.from_bytes(metadata_length, byteorder='little')
 
-            f.seek(metadata_offset)
-            replay_metadata = f.read(metadata_length)
-            replay_metadata = json.loads(str(replay_metadata, encoding="utf-8"))
-            stats_json = json.loads(replay_metadata["statsJson"])
+                f.seek(metadata_offset)
+                replay_metadata = f.read(metadata_length)
+                replay_metadata = json.loads(str(replay_metadata, encoding="utf-8"))
+                stats_json = json.loads(replay_metadata["statsJson"])
 
-            return replay_metadata, stats_json
+                return replay_metadata, stats_json
+        except Exception as e:
+            return None, None
