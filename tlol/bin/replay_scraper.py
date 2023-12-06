@@ -19,7 +19,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-"""Scrapes the observations from replays within a source directory and stores
+"""NOTE: THIS IS BROKEN DUE TO CHANGES TO tlol/replays/scraper.py
+Scrapes the observations from replays within a source directory and stores
 those scraped observations as json in a target directory."""
 
 from absl import app
