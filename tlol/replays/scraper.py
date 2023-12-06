@@ -26,7 +26,6 @@ import os
 import time
 import json
 import subprocess
-import re
 
 
 class ReplayScraper(object):
@@ -85,33 +84,34 @@ class ReplayScraper(object):
         replay_script_path = replay_script_path.replace("\\", "/")
 
         replay_script_cmd  = replay_script_path
+        replay_script_cmd  = "python " + replay_script_cmd
 
         args = [
-            os.path.join(self.scraper_dir, "ConsoleApplication.exe"),
-            output_path,
-            str(end_time),
-            str(self.replay_speed),
-            replay_script_cmd]
+            os.path.join(self.scraper_dir, "T_T Pandoras Box.exe"),
+            f'replay_file={str(output_path)}',
+            f'end_time={str(end_time)}',
+            f'replay_mult={str(self.replay_speed)}',
+            f'replay_cmd={str(replay_script_cmd)}']
         print('scraper args:', args)
         subprocess.call(
             args,
             cwd=self.scraper_dir)
 
-    def scrape(self, game_id, end_time, delay=2, scraper=True):
+    def scrape(self, replay_path, end_time, delay=2, scraper=True):
         """Scrapes a *.rofl file.
         
         Scrapes an individual replay file using the League of Legends
         game client. Scrapes the replay at faster than real-time speed.
         
         Args:
-            game_id: Game ID within `replay_dir` to scrape.
+            replay_path: Full replay filename.
             end_time: Number of seconds to scrape within replay.
             delay: Number of seconds to wait before ending.
         """
-        replay_fname = f"{self.region}1-{game_id}.rofl"
+        replay_fname = replay_path
         replay_path = os.path.join(self.replay_dir, replay_fname)
 
-        output_fname = f"{self.region}1-{game_id}.json"
+        output_fname = os.path.basename(replay_path).replace(".rofl", ".json")
         output_path = os.path.join(self.dataset_dir, output_fname)
 
         self.run_client(replay_path)
@@ -119,20 +119,19 @@ class ReplayScraper(object):
             self.run_scraper(output_path, end_time)
 
         if scraper:
-            os.system("taskkill /f /im \"ConsoleApplication.exe\"")
+            os.system("taskkill /f /im \"T_T Pandoras Box.exe\"")
         else:
             time.sleep(60 * 10) # Go to sleep for 10 mins during testing
         os.system("taskkill /f /im \"League of Legends.exe\"")
         time.sleep(delay)
 
-    def get_replay_ids(self):
+    def get_replay_paths(self):
         """Returns all of the *.rofl files within the `replay_dir`."""
-        ids = os.listdir(self.replay_dir)
-        ids = [fname if fname.endswith(".rofl") else None
-                 for fname in ids]
-        ids = list(filter(lambda x: x != None, ids))
-        ids = [fname.split(".")[0].split("-")[1] for fname in ids]
-        return ids
+        replay_paths = os.listdir(self.replay_dir)
+        replay_paths = [fname if fname.endswith(".rofl") else None
+                         for fname in replay_paths]
+        replay_paths = [path for path in replay_paths if path]
+        return replay_paths
     
     def get_metadata(self, game_id, path=False):
         try:
@@ -160,5 +159,7 @@ class ReplayScraper(object):
                 stats_json = json.loads(replay_metadata["statsJson"])
 
                 return replay_metadata, stats_json
+            
         except Exception as e:
+            print("ERR PROCESSING REPLAY FILE:", str(e))
             return None, None

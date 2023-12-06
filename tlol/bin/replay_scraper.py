@@ -23,6 +23,8 @@
 Scrapes the observations from replays within a source directory and stores
 those scraped observations as json in a target directory."""
 
+from pathlib import Path
+
 from absl import app
 from absl import flags
 
@@ -36,7 +38,6 @@ flags.DEFINE_string("scraper_dir",   None,  "Path to the scraper program")
 flags.DEFINE_string("region",        "EUW", "Region of the replay files")
 flags.DEFINE_integer("replay_speed", 8,     "League client replay speed multiplier")
 flags.DEFINE_integer("end_time",     "-1",  "(Default: Full game) Set maximum replay length in seconds")
-flags.DEFINE_string("replay_idxs",   None,  "(Optional) Comma separated list of replays to scrape within `replay_dir`")
 flags.DEFINE_bool("use_scraper",     True,  "(Optional) Disable the scraper for debugging")
 flags.mark_flag_as_required('game_dir')
 flags.mark_flag_as_required('replay_dir')
@@ -52,25 +53,20 @@ def main(unused_argv):
         region=FLAGS.region,
         replay_speed=FLAGS.replay_speed)
 
-    game_ids = scraper.get_replay_ids()
+    replay_paths = scraper.get_replay_paths()
 
-    if FLAGS.replay_idxs:
-        replay_idxs   = FLAGS.replay_idxs.split(",")
-        filtered_idxs = set(game_ids).intersection(set(replay_idxs))
-        game_ids      = list(filtered_idxs)
-
-    print('game_ids:', game_ids)
-    for game_id in game_ids:
-        metadata, _ = scraper.get_metadata(game_id)
+    for replay_path in replay_paths:
+        full_replay_path = str(Path(FLAGS.replay_dir) / replay_path)
+        metadata, _ = scraper.get_metadata(full_replay_path, path=True)
         seconds = (metadata["gameLength"] // 1000) - 1
 
         # NOTE: Change this to `end_time=seconds` to scrape the full replay
         #       This is the number of seconds of the replay to scrape
         end_time = seconds if FLAGS.end_time == -1 else FLAGS.end_time
 
-        print('GameID:', game_id, metadata["gameLength"])
+        print('Replay:', replay_path, metadata["gameLength"])
         scraper.scrape(
-            game_id=game_id,
+            replay_path=full_replay_path,
             end_time=end_time,
             delay=2,
             scraper=FLAGS.use_scraper)

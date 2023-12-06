@@ -19,63 +19,70 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-"""Scrapes the observations from replays within a source directory and stores
-those scraped observations as json in a target directory."""
 
-from absl import app
-from absl import flags
+from queue import Queue
+from threading import Thread
+import argparse
 
+from flask import Flask, request, jsonify, send_from_directory
 from tlol.replays.scraper import ReplayScraper
 
-FLAGS = flags.FLAGS
-flags.DEFINE_string("game_dir",      None,  "League of Legends game directory")
-flags.DEFINE_string("replay_dir",    None,  "League of Legends *.rofl replay directory")
-flags.DEFINE_string("dataset_dir",   None,  "JSON replay files output directory")
-flags.DEFINE_string("scraper_dir",   None,  "Path to the scraper program")
-flags.DEFINE_string("region",        "EUW", "Region of the replay files")
-flags.DEFINE_integer("replay_speed", 8,     "League client replay speed multiplier")
-flags.DEFINE_integer("end_time",     "-1",  "(Default: Full game) Set maximum replay length in seconds")
-flags.DEFINE_string("replay_idxs",   None,  "(Optional) Comma separated list of replays to scrape within `replay_dir`")
-flags.DEFINE_bool("use_scraper",     True,  "(Optional) Disable the scraper for debugging")
-flags.mark_flag_as_required('game_dir')
-flags.mark_flag_as_required('replay_dir')
-flags.mark_flag_as_required('dataset_dir')
-flags.mark_flag_as_required('scraper_dir')
+# Set up argparse
+parser = argparse.ArgumentParser(description="League of Legends Replay Data Service")
+parser.add_argument('--host', default='127.0.0.1', type=str, help='Host for replay scraping server')
+parser.add_argument('--port', default=5000, type=int, help='Port for replay scraping server')
+parser.add_argument('--game_dir', required=True, type=str, help='League of Legends game directory')
+parser.add_argument('--replay_dir', required=True, type=str, help='League of Legends *.rofl replay directory')
+parser.add_argument('--dataset_dir', required=True, type=str, help='JSON replay files output directory')
+parser.add_argument('--scraper_dir', required=True, type=str, help='Path to the scraper program')
+parser.add_argument('--replay_speed', default=8, type=int, help='League client replay speed during scraping')
 
-def main(unused_argv):
-    scraper = ReplayScraper(
-        game_dir=FLAGS.game_dir,
-        replay_dir=FLAGS.replay_dir,
-        dataset_dir=FLAGS.dataset_dir,
-        scraper_dir=FLAGS.scraper_dir,
-        region=FLAGS.region,
-        replay_speed=FLAGS.replay_speed)
+args = parser.parse_args()
 
-    game_ids = scraper.get_replay_ids()
+app = Flask(__name__)
+scraping_queue = Queue()
+completed_games = {}  # To store completed game data
 
-    if FLAGS.replay_idxs:
-        replay_idxs   = FLAGS.replay_idxs.split(",")
-        filtered_idxs = set(game_ids).intersection(set(replay_idxs))
-        game_ids      = list(filtered_idxs)
+scraper = ReplayScraper(
+        game_dir=args.game_dir,
+        replay_dir=args.replay_dir,
+        dataset_dir=args.dataset_dir,
+        scraper_dir=args.scraper_dir,
+        region="",
+        replay_speed=args.replay_speed)
 
-    print('game_ids:', game_ids)
-    for game_id in game_ids:
-        metadata, _ = scraper.get_metadata(game_id)
-        seconds = (metadata["gameLength"] // 1000) - 1
+# Flask Endpoints
+@app.route('/scrape_game', methods=['POST'])
+def scrape_game():
+    game_id = request.json.get('game_id')
+    scraping_queue.put(game_id)
+    return jsonify({"message": f"Game {game_id} added to the queue"}), 202
 
-        # NOTE: Change this to `end_time=seconds` to scrape the full replay
-        #       This is the number of seconds of the replay to scrape
-        end_time = seconds if FLAGS.end_time == -1 else FLAGS.end_time
+@app.route('/scraping_progress', methods=['POST'])
+def scraping_progress():
+    return jsonify(list(completed_games.keys())), 200
 
-        print('GameID:', game_id, metadata["gameLength"])
-        scraper.scrape(
-            game_id=game_id,
-            end_time=end_time,
-            delay=2,
-            scraper=FLAGS.use_scraper)
+@app.route('/remove_game', methods=['POST'])
+def remove_game():
+    game_id = request.json.get('game_id')
+    # Logic to remove the game from the queue or mark it as not needed
+    return jsonify({"message": f"Game {game_id} removal requested"}), 200
 
-def entry_point():
-    app.run(main)
+@app.route('/download_game/<game_id>', methods=['POST'])
+def download_game(game_id):
+    directory = args.dataset_dir
+    filename = f"{game_id}.json"  # Adjust based on how you store files
+    return send_from_directory(directory, filename, as_attachment=True)
+
+# Function to process the scraping queue
+def process_queue():
+    while True:
+        if not scraping_queue.empty():
+            game_id = scraping_queue.get()
+            completed_games[game_id] = True
 
 if __name__ == "__main__":
-    app.run(main)
+    thread = Thread(target=process_queue)
+    thread.daemon = True
+    thread.start()
+    app.run(debug=True, host=args.host, port=args.port)
