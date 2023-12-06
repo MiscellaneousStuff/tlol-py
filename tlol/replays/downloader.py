@@ -43,7 +43,8 @@ class ReplayDownloader(object):
         for proc in psutil.process_iter():
             try:
                 n = proc.name()
-                if "LeagueClientUx" in n:
+                print(n)
+                if n == "LeagueClientUx.exe":
                     cmdline = proc.cmdline()
                     port = None
                     tok = None
@@ -64,6 +65,11 @@ class ReplayDownloader(object):
             f"riot:{self.remoting_auth_token}".encode("utf-8"))
         auth_token = str(auth_token, encoding="utf-8")
         app_port = self.app_port
+
+        # NOTE: TEMP HARDFIX
+        auth_token = "cmlvdDpFalVRTzIxZVNRdTZ2Yy1KWkVNMzFn"
+        app_port = 65185
+
         url = \
             f"https://127.0.0.1:{app_port}/lol-replays/v1/rofls/{game_id}/download/graceful"
         req = requests.post(
