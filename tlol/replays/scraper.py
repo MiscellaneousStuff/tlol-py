@@ -113,7 +113,7 @@ class ReplayScraper(object):
 
         output_fname = os.path.basename(replay_path).replace(".rofl", ".json")
         output_path = os.path.join(self.dataset_dir, output_fname)
-
+        
         self.run_client(replay_path)
         if scraper:
             self.run_scraper(output_path, end_time)
