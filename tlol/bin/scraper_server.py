@@ -37,37 +37,57 @@ parser.add_argument('--game_dir', required=True, type=str, help='League of Legen
 parser.add_argument('--replay_dir', required=True, type=str, help='League of Legends *.rofl replay directory')
 parser.add_argument('--dataset_dir', required=True, type=str, help='JSON replay files output directory')
 parser.add_argument('--scraper_dir', required=True, type=str, help='Path to the scraper program')
-parser.add_argument('--replay_speed', default=8, type=int, help='League client replay speed during scraping')
 
 args = parser.parse_args()
 
 app = Flask(__name__)
 scraping_queue = Queue()
-completed_games = {}  # To store completed game data
 currently_scraping = ""
 
-scraper = ReplayScraper(
-        game_dir=args.game_dir,
-        replay_dir=args.replay_dir,
-        dataset_dir=args.dataset_dir,
-        scraper_dir=args.scraper_dir,
-        region="",
-        replay_speed=args.replay_speed)
+def get_queue_contents(queue):
+    temp_list = []
+    temp_queue = Queue()
 
-# Flask Endpoints
+    # Transfer all items to a temporary list and a temporary queue
+    while not queue.empty():
+        item = queue.get()
+        temp_list.append(item)
+        temp_queue.put(item)
+
+    # Put items back into the original queue
+    while not temp_queue.empty():
+        queue.put(temp_queue.get())
+
+    return temp_list
+
+def check_existing_scraped_replay(game_id):
+    full_path = os.path.join(args.dataset_dir, f"{game_id}.json")
+    print("DOES IT EXIST?:", full_path)
+    return os.path.exists(full_path)
+
 @app.route('/api/scrape/add', methods=['POST'])
 def scrape_add():
-    game_id      = request.json.get('game_id')
-    replay_speed = request.json.get('replay_speed')
-    end_time     = request.json.get('end_time')
-    scrape_request = {
-        "game_id": game_id + ".rofl",
-        "replay_speed": replay_speed,
-        "end_time": end_time
-    }
-    scraping_queue.put(scrape_request)
-    return jsonify({"message": f"Game {game_id} added to the queue"}), 202
+    try:
+        game_id = request.json.get('game_id')
 
+        if check_existing_scraped_replay(game_id):
+            return jsonify({"message": f"Game {game_id} already exists!"}), 202
+        else:
+            replay_speed = request.json.get('replay_speed')
+            end_time     = request.json.get('end_time')
+            scrape_request = {
+                "game_id": game_id,
+                "replay_speed": replay_speed,
+                "end_time": end_time
+            }
+            scraping_queue.put(scrape_request)
+            return jsonify({"message": f"Game {game_id} added to the queue"}), 202
+    except Exception as e:
+        return jsonify({
+            "error":
+            f"Internal server error while adding game: {str(e)}"}
+        ), 500
+    
 @app.route('/api/scrape/list', methods=['GET'])
 def scrape_list():
     lst = os.listdir(args.dataset_dir)
@@ -77,14 +97,34 @@ def scrape_list():
     else:
         return jsonify("No replays scraped!"), 200
 
+@app.route('/api/scrape/queue', methods=['GET'])
+def scrape_queue():
+    lst = get_queue_contents(scraping_queue)
+    return jsonify({"queue": lst}), 200
+
 @app.route('/api/scrape/current', methods=['GET'])
 def scrape_current():
     return jsonify(currently_scraping), 200
 
-@app.route('/api/scrape/remote/<game_id>', methods=['DELETE'])
+@app.route('/api/scrape/remove/<game_id>', methods=['DELETE'])
 def scrape_remove(game_id):
-    # Logic to remove the game from the queue or mark it as not needed
-    return jsonify({"message": f"Game {game_id} removal requested"}), 200
+    global scraping_queue
+    try:
+        # Create a temporary queue
+        temp_queue = Queue()
+
+        # Transfer all items except the one to remove to the temporary queue
+        while not scraping_queue.empty():
+            item = scraping_queue.get()
+            if item['game_id'] != game_id:
+                temp_queue.put(item)
+
+        # Swap the queues
+        scraping_queue = temp_queue
+
+        return jsonify({"message": f"Game {game_id} removal requested"}), 200
+    except Exception as e:
+        return jsonify({"error": f"Error during removal of game {game_id}: {str(e)}"}), 500
 
 @app.route('/api/scrape/download/<game_id>', methods=['GET'])
 def scrape_download(game_id):
@@ -113,12 +153,17 @@ def process_queue():
     global currently_scraping
     while True:
         if not scraping_queue.empty():
+            # Get scrape request info
             scrape_request = scraping_queue.get()
-            replay_path = scrape_request["game_id"]
+            replay_path = scrape_request["game_id"] + ".rofl"
             end_time = scrape_request["end_time"]
             replay_speed = scrape_request["replay_speed"]
             game_id = os.path.basename(replay_path).replace(".rofl", "")
-            currently_scraping = game_id
+
+            # Set server state info
+            currently_scraping = scrape_request
+
+            # Initialise scraping settings
             scraper = ReplayScraper(
                 game_dir=args.game_dir,
                 replay_dir=args.replay_dir,
@@ -129,15 +174,20 @@ def process_queue():
             full_replay_path = os.path.join(args.replay_dir, replay_path)
             metadata, _ = scraper.get_metadata(full_replay_path, path=True)
             seconds = (metadata["gameLength"] // 1000) - 1
-            end_time = seconds if end_time == -1 else end_time
 
+            end_time = seconds \
+                       if end_time == -1 or seconds <= end_time \
+                       else end_time
+
+            # Perform scraping using T_T-Pandoras-Box and Lol client in replay mode
             scraper.scrape(
                 replay_path=replay_path,
                 end_time=end_time,
                 delay=2,
                 scraper=True)
-            completed_games[game_id] = True
-            currently_scraping = ""
+            
+            # Update `currently_scraping` state
+            currently_scraping = "Not currently scraping!"
 
 if __name__ == "__main__":
     thread = Thread(target=process_queue)
