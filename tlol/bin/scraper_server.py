@@ -149,6 +149,29 @@ def scrape_download(game_id):
     else:
         return f"Scraped replay file: {game_id}, doesn't exist", 404
 
+@app.route('/api/scrape/download_rofl/<game_id>', methods=['GET'])
+def scrape_download_rofl(game_id):
+    directory = args.replay_dir  # Replace with your directory path
+    filename = f"{game_id}.rofl"  # Adjust based on how you store files
+    full_path = os.path.join(directory, filename)
+    
+    if os.path.exists(full_path):
+        chunk_size = 1024 * 1024 # MiB
+
+        def generate():
+            with open(full_path, 'rb') as file:
+                while True:
+                    data = file.read(chunk_size)
+                    if not data:
+                        break
+                    yield data
+
+        return Response(generate(), 
+                        mimetype='application/zip',
+                        headers={'Content-Disposition': f'attachment; filename={filename}'})
+    else:
+        return f"Original replay file: {game_id}, doesn't exist", 404
+
 def process_queue():
     global currently_scraping
     while True:
