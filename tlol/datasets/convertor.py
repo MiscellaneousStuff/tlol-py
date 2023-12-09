@@ -310,7 +310,7 @@ def convert_dataset(json_path, db_dir, big_int=False):
     try:
         insert_game(json_path, cur)
     except Exception as e:
-        print(e)
+        print("Err:", e)
     
     cur.execute("COMMIT;")
 
