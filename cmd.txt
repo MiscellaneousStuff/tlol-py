@@ -1,0 +1,6 @@
+PS C:\Users\win8t\OneDrive\Desktop\projects\tlol-all\T_T-Pandoras-Box>
+python -m tlol.bin.replay_scraper
+--game_dir "D:\\LoL Replays\\13.23\\Game\\" --replay_dir "D:\\LoL Replays\\13.23\\Replays\\"
+--dataset_dir "D:\\LoL Replays\\13.23\\JSON Replays\\"
+--scraper_dir "C:\\Users\\win8t\\OneDrive\\Desktop\\projects\\tlol-all\\T_T-Pandoras-Box\\x64\\Release\\T_T\\"
+--end_time 300 --replay_speed 16 --replay_list "./replay_paths.txt"

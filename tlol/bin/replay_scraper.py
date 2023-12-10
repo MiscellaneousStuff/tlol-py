@@ -22,6 +22,9 @@
 """Scrapes the observations from replays within a source directory and stores
 those scraped observations as json in a target directory."""
 
+import os
+from pathlib import Path
+
 from absl import app
 from absl import flags
 
@@ -35,7 +38,7 @@ flags.DEFINE_string("scraper_dir",   None,  "Path to the scraper program")
 flags.DEFINE_string("region",        "EUW", "Region of the replay files")
 flags.DEFINE_integer("replay_speed", 8,     "League client replay speed multiplier")
 flags.DEFINE_integer("end_time",     "-1",  "(Default: Full game) Set maximum replay length in seconds")
-flags.DEFINE_string("replay_idxs",   None,  "(Optional) Comma separated list of replays to scrape within `replay_dir`")
+flags.DEFINE_string("replay_list",   "",    "(Optional) File containing replay IDs to scrape")
 flags.DEFINE_bool("use_scraper",     True,  "(Optional) Disable the scraper for debugging")
 flags.mark_flag_as_required('game_dir')
 flags.mark_flag_as_required('replay_dir')
@@ -51,25 +54,37 @@ def main(unused_argv):
         region=FLAGS.region,
         replay_speed=FLAGS.replay_speed)
 
-    game_ids = scraper.get_replay_ids()
+    completed_replays = os.listdir(FLAGS.dataset_dir)
+    completed_replays = [replay.replace(".json", "") for replay in completed_replays]
 
-    if FLAGS.replay_idxs:
-        replay_idxs   = FLAGS.replay_idxs.split(",")
-        filtered_idxs = set(game_ids).intersection(set(replay_idxs))
-        game_ids      = list(filtered_idxs)
+    # Remove completed replays
+    original_replay_paths = [r.replace(".rofl", "") for r in scraper.get_replay_paths()]
+    replay_paths = [r.replace(".rofl", "") for r in scraper.get_replay_paths()]
+    print("replay_paths:", len(set(replay_paths)), len(set(completed_replays)))
 
-    print('game_ids:', game_ids)
-    for game_id in game_ids:
-        metadata, _ = scraper.get_metadata(game_id)
+    if FLAGS.replay_list:
+        with open(FLAGS.replay_list) as f:
+            replay_list = [r.replace(".rofl", "") for r in f.read().split("\n")]
+            print("replay_list:", len(replay_list), replay_list[0], completed_replays[0])
+            replay_list = list(set(original_replay_paths).intersection(set(replay_list)))
+            replay_paths = replay_list
+
+    filtered_replay_paths = list(set(replay_paths) - set(completed_replays))
+
+    print("replay_paths:", len(filtered_replay_paths), len(original_replay_paths), len(replay_paths), len(completed_replays))
+
+    for replay_path in filtered_replay_paths:
+        full_replay_path = str(Path(FLAGS.replay_dir) / f"{replay_path}.rofl")
+        metadata, _ = scraper.get_metadata(full_replay_path, path=True)
         seconds = (metadata["gameLength"] // 1000) - 1
 
         # NOTE: Change this to `end_time=seconds` to scrape the full replay
         #       This is the number of seconds of the replay to scrape
         end_time = seconds if FLAGS.end_time == -1 else FLAGS.end_time
 
-        print('GameID:', game_id, metadata["gameLength"])
+        print('GameID:', full_replay_path, metadata["gameLength"])
         scraper.scrape(
-            game_id=game_id,
+            game_id=full_replay_path,
             end_time=end_time,
             delay=2,
             scraper=FLAGS.use_scraper)

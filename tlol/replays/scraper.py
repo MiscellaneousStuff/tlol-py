@@ -87,11 +87,11 @@ class ReplayScraper(object):
         replay_script_cmd  = replay_script_path
 
         args = [
-            os.path.join(self.scraper_dir, "ConsoleApplication.exe"),
-            output_path,
-            str(end_time),
-            str(self.replay_speed),
-            replay_script_cmd]
+            os.path.join(self.scraper_dir, "T_T Pandoras Box.exe"),
+            f"replay_file={output_path}",
+            f"end_time={str(end_time)}",
+            f"replay_mult={str(self.replay_speed)}",
+            f"replay_cmd={replay_script_cmd}"]
         print('scraper args:', args)
         subprocess.call(
             args,
@@ -108,10 +108,11 @@ class ReplayScraper(object):
             end_time: Number of seconds to scrape within replay.
             delay: Number of seconds to wait before ending.
         """
-        replay_fname = f"{self.region}1-{game_id}.rofl"
-        replay_path = os.path.join(self.replay_dir, replay_fname)
+        # replay_fname = f"{self.region}1-{game_id}.rofl"
+        replay_path = os.path.join(self.replay_dir, game_id)
 
-        output_fname = f"{self.region}1-{game_id}.json"
+        # output_fname = f"{self.region}1-{game_id}.json"
+        output_fname = os.path.basename(replay_path).replace(".rofl", ".json")
         output_path = os.path.join(self.dataset_dir, output_fname)
 
         self.run_client(replay_path)
@@ -119,23 +120,25 @@ class ReplayScraper(object):
             self.run_scraper(output_path, end_time)
 
         if scraper:
-            os.system("taskkill /f /im \"ConsoleApplication.exe\"")
+            os.system("taskkill /f /im \"T_T Pandoras Box.exe\"")
         else:
             time.sleep(60 * 10) # Go to sleep for 10 mins during testing
         os.system("taskkill /f /im \"League of Legends.exe\"")
         time.sleep(delay)
 
-    def get_replay_ids(self):
+    def get_replay_paths(self):
         """Returns all of the *.rofl files within the `replay_dir`."""
         ids = os.listdir(self.replay_dir)
         ids = [fname if fname.endswith(".rofl") else None
                  for fname in ids]
         ids = list(filter(lambda x: x != None, ids))
-        ids = [fname.split(".")[0].split("-")[1] for fname in ids]
         return ids
     
-    def get_metadata(self, game_id):
-        replay_fname = f"{self.region}1-{game_id}.rofl"
+    def get_metadata(self, game_id, path=False):
+        if not path:
+            replay_fname = f"{self.region}1-{game_id}.rofl"
+        else:
+            replay_fname = game_id
         replay_path  = os.path.join(self.replay_dir, replay_fname)
         print(os.path.join(self.replay_dir, replay_fname))
 
