@@ -102,6 +102,46 @@ CREATE_MISSILES_TABLE = """CREATE TABLE missiles (
                         pos_z REAL
                         )"""
 
+CREATE_TURRETS_TABLE = """CREATE TABLE turrets (
+                        game_id INTEGER,
+                        time REAL,
+                        name TEXT,
+                        hp REAL,
+                        max_hp REAL,
+                        mana REAL,
+                        max_mana REAL,
+                        armor REAL,
+                        mr REAL,
+                        ad REAL,
+                        ap REAL,
+                        level INTEGER,
+                        atk_range REAL,
+                        visible INTEGER,
+                        team INTEGER,
+                        pos_x REAL,
+                        pos_z REAL
+                        )"""
+
+CREATE_MONSTERS_TABLE = """CREATE TABLE monsters (
+                        game_id INTEGER,
+                        time REAL,
+                        name TEXT,
+                        hp REAL,
+                        max_hp REAL,
+                        mana REAL,
+                        max_mana REAL,
+                        armor REAL,
+                        mr REAL,
+                        ad REAL,
+                        ap REAL,
+                        level INTEGER,
+                        atk_range REAL,
+                        visible INTEGER,
+                        team INTEGER,
+                        pos_x REAL,
+                        pos_z REAL
+                        )"""
+
 def handle_nan(x):
     return 0 if math.isnan(x) else x
     
@@ -187,6 +227,48 @@ def insert_objs(game_id, obs, cur, time, table):
                     {handle_nan(c["pos_z"])}
                     )"""
                 cur.execute(s)
+            elif table == "turrets":
+                s = f"""INSERT INTO turrets VALUES (
+                    {game_id},
+                    {time},
+                    '{handle_str(c["name"])}',
+                    {handle_nan(c["hp"])},
+                    {handle_nan(c["max_hp"])},
+                    {handle_nan(c["mana"])},
+                    {handle_nan(c["max_mana"])},
+                    {handle_nan(c["armor"])},
+                    {handle_nan(c["mr"])},
+                    {handle_nan(c["ad"])},
+                    {handle_nan(c["ap"])},
+                    {handle_nan(c["level"])},
+                    {handle_nan(c["atk_range"])},
+                    {(1 if c["visible"] else 0)},
+                    {handle_nan(c["team"])},
+                    {handle_nan(c["pos_x"])},
+                    {handle_nan(c["pos_z"])}
+                    )"""
+                cur.execute(s)
+            elif table == "monsters":
+                s = f"""INSERT INTO monsters VALUES (
+                    {game_id},
+                    {time},
+                    '{handle_str(c["name"])}',
+                    {handle_nan(c["hp"])},
+                    {handle_nan(c["max_hp"])},
+                    {handle_nan(c["mana"])},
+                    {handle_nan(c["max_mana"])},
+                    {handle_nan(c["armor"])},
+                    {handle_nan(c["mr"])},
+                    {handle_nan(c["ad"])},
+                    {handle_nan(c["ap"])},
+                    {handle_nan(c["level"])},
+                    {handle_nan(c["atk_range"])},
+                    {(1 if c["visible"] else 0)},
+                    {handle_nan(c["team"])},
+                    {handle_nan(c["pos_x"])},
+                    {handle_nan(c["pos_z"])}
+                    )"""
+                cur.execute(s)
 
         except Exception as e:
             print("ERR:", s)
@@ -208,6 +290,8 @@ def insert_game(cur_fi, cur):
             insert_objs(game_id, obs, cur, time, "champs")
             insert_objs(game_id, obs, cur, time, "minions")
             insert_objs(game_id, obs, cur, time, "missiles")
+            insert_objs(game_id, obs, cur, time, "turrets")
+            insert_objs(game_id, obs, cur, time, "monsters")
 
 def convert_dataset(json_path, db_dir, big_int=False):
     region, game_id = \
@@ -221,13 +305,16 @@ def convert_dataset(json_path, db_dir, big_int=False):
     cur.execute(CREATE_CHAMP_TABLE)
     cur.execute(CREATE_MINIONS_TABLE)
     cur.execute(CREATE_MISSILES_TABLE)
+    cur.execute(CREATE_TURRETS_TABLE)
+    cur.execute(CREATE_MONSTERS_TABLE)
 
     cur.execute("BEGIN;")
 
     try:
         insert_game(json_path, cur)
     except Exception as e:
-        print("Err:", e)
+        import traceback
+        print("Err:", e, traceback.format_exc())
     
     cur.execute("COMMIT;")
 
